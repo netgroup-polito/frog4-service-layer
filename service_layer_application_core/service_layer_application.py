@@ -11,14 +11,14 @@ import logging
 
 from sqlalchemy.orm.exc import NoResultFound
 from service_layer_application_core.user_authentication import UserAuthentication
-from service_layer_application_core.exception import SessionNotFound
+from service_layer_application_core.exception import SessionNotFound, UnauthorizedRequest
 from service_layer_application_core.controller import ServiceLayerController
 from service_layer_application_core.validate_request import RequestValidator
 
 
 class ServiceLayer(object):
     """
-    Orchestrator class that intercept the REST call through the WSGI server
+    ServiceLayer class that intercept the REST call through the WSGI server
     """
 
     def on_delete(self, request, response, mac_address=None):
@@ -110,6 +110,7 @@ class ServiceLayer(object):
         """
         try:
             user_data = UserAuthentication().authenticateUserFromRESTRequest(request)
+            logging.debug("Autenticated user: " + user_data.username)
             # Now, it initialize a new controller instance to handle the request
             controller = ServiceLayerController(user_data)
             controller.get()
@@ -135,6 +136,8 @@ class ServiceLayer(object):
         except falcon.HTTPError as err:
             logging.exception("Falcon " + err.title)
             raise
+        except UnauthorizedRequest as err:
+            raise falcon.HTTPUnauthorized("Authentication error. ", err.message)
         except Exception as err:
             logging.exception(err)
             raise falcon.HTTPInternalServerError('Contact the admin. ', err.message)
