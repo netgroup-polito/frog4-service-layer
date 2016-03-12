@@ -103,10 +103,9 @@ class ServiceLayer(object):
 
     def on_get(self, request, response):
         """
-        Autenticate the user
+        Get the status of the user NF-FG by requesting it to the orchestrator
         :param request: HTTP GET request containing user credential as headers (X-Auth-User, X-Auth-Pass, X-Auth-Tenant)
-        :param response:
-        :return:
+        :param response: The status of the NF-FG returned by the orchestrator
         """
         try:
             user_data = UserAuthentication().authenticateUserFromRESTRequest(request)
