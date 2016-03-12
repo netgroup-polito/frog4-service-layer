@@ -35,7 +35,7 @@
         
     - Change templates inside the "templates" directory with right information
     
-    - Associate for eache user in the DB a service graph (for this step could be useful to install phpmyadmin)
+    - Associate for each user in the DB a service graph (for this step could be useful to install phpmyadmin)
         - Insert a row in the table user
 
 - Run the service layer

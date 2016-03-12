@@ -29,7 +29,7 @@ class UserAuthentication(object):
     
     def authenticateUserFromCredentials(self, username, password, tenant):
         if username is None or password is None or tenant is None:
-                raise UnauthorizedRequest('Authentication credentials required')
+            raise UnauthorizedRequest('Authentication credentials required')
         
         user = User().getUser(username)
         if user.password == password:
@@ -38,4 +38,3 @@ class UserAuthentication(object):
                 userobj = UserData(username, password, tenant)
                 return userobj
         raise UnauthorizedRequest('Invalid authentication credentials')
-    

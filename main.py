@@ -1,13 +1,14 @@
-'''
+"""
 Created on Oct 1, 2014
 
 @author: fabiomignini
-'''
+"""
 
-import falcon, logging
+import falcon
+import logging
 
 from service_layer_application_core.config import Configuration
-from service_layer_application_core.service_layer_application import  ServiceLayer
+from service_layer_application_core.service_layer_application import ServiceLayer
 
 conf = Configuration()
 
@@ -23,10 +24,10 @@ elif conf.VERBOSE is True:
 else:
     log_level = logging.WARNING
 
-#format = '%(asctime)s %(filename)s %(funcName)s %(levelname)s %(message)s'
+# format = '%(asctime)s %(filename)s %(funcName)s %(levelname)s %(message)s'
 log_format = '%(asctime)s %(levelname)s %(message)s - %(filename)s'
 
-logging.basicConfig( filename=conf.LOG_FILE, level=log_level, format=log_format, datefmt='%m/%d/%Y %I:%M:%S %p')
+logging.basicConfig(filename=conf.LOG_FILE, level=log_level, format=log_format, datefmt='%m/%d/%Y %I:%M:%S %p')
 logging.debug("Orchestrator Starting")
 print "Welcome to the User-oriented Service Layer Application"
 
@@ -34,19 +35,8 @@ print "Welcome to the User-oriented Service Layer Application"
 app = falcon.API()
 logging.info("Starting Service Layer application")
 
-orch = ServiceLayer()
-app.add_route('/service-layer', orch)
-app.add_route('/service-layer/{mac_address}', orch)
-
-
-
+serviceLayer = ServiceLayer()
+app.add_route('/service-layer', serviceLayer)
+app.add_route('/service-layer/{mac_address}', serviceLayer)
 
 logging.info("Falcon Successfully started")
-
-
-
-
-
-
-    
-    
