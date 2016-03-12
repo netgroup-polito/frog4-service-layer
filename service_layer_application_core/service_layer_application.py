@@ -19,9 +19,17 @@ from service_layer_application_core.validate_request import RequestValidator
 class ServiceLayer(object):
     """
     ServiceLayer class that intercept the REST call through the WSGI server
+    It allows the user to manage his own graph through a REST web service.
     """
 
     def on_delete(self, request, response, mac_address=None):
+        """
+        De-instantiate the NF-FG of the user, or update it by removing a mac rule
+
+        :param request: HTTP GET request containing user credential as headers (X-Auth-User, X-Auth-Pass, X-Auth-Tenant)
+        :param response: HTTP response code
+        :param mac_address: if specified, only the rule relative to this mac will be erased
+        """
         try:
             user_data = UserAuthentication().authenticateUserFromRESTRequest(request)
             # Now, it initialize a new controller instance to handle the request
@@ -56,15 +64,21 @@ class ServiceLayer(object):
         except falcon.HTTPError as err:
             logging.exception("Falcon " + err.title)
             raise
+        except UnauthorizedRequest as err:
+            raise falcon.HTTPUnauthorized("Authentication error. ", err.message)
         except Exception as err:
             logging.exception(err)
             raise falcon.HTTPInternalServerError('Contact the admin. ', err.message)
 
     def on_put(self, request, response):
         """
-        Instantiate user profile
-        Args:
-            request: json that contain the MAC address of the user device {"session":{"mac":"fc:4d:e2:56:9f:19"}}
+        Create a new session for this user instantiating its NF-FG;
+        if the user already have an active session, the old NF-FG will be updated.
+        The NF-FG is fetched from the database, and sent to the orchestrator (put).
+
+        :param request: HEADER - user credential (X-Auth-User, X-Auth-Pass, X-Auth-Tenant)
+                        BODY - json that contain the MAC address of the user device, as {"session":{"mac":"fc:4d:e2:56:9f:19"}}
+        :param response: HTTP response code
         """
         try:
             user_data = UserAuthentication().authenticateUserFromRESTRequest(request)
@@ -97,13 +111,16 @@ class ServiceLayer(object):
         except falcon.HTTPError as err:
             logging.exception("Falcon " + err.title)
             raise
+        except UnauthorizedRequest as err:
+            raise falcon.HTTPUnauthorized("Authentication error. ", err.message)
         except Exception as err:
             logging.exception(err)
             raise falcon.HTTPInternalServerError('Contact the admin. ', err.message)
 
     def on_get(self, request, response):
         """
-        Get the status of the user NF-FG by requesting it to the orchestrator
+        Get the status of the user NF-FG by requesting it to the orchestrator.
+
         :param request: HTTP GET request containing user credential as headers (X-Auth-User, X-Auth-Pass, X-Auth-Tenant)
         :param response: The status of the NF-FG returned by the orchestrator
         """
