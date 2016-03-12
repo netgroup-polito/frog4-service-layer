@@ -51,8 +51,8 @@ class ServiceLayerController():
     def get(self):
         
         session = Session().get_active_user_session(self.user_data.getUserID()) 
+        logging.debug("Graph id: " + session.service_graph_id)
 
-        
         status = self.orchestrator.getNFFGStatus(session.service_graph_id)
         logging.debug("Status : "+status['status'])
         if status['status'] == "complete":
@@ -61,7 +61,6 @@ class ServiceLayerController():
             code = falcon.HTTP_202
 
         logging.debug("Username : "+self.user_data.username+", Resources : "+json.dumps(status))
-        
         
         self.response.body = json.dumps(status)
         self.response.status = code    
@@ -73,6 +72,8 @@ class ServiceLayerController():
         If there are more active session for specific user a delete become an update
         that erase a mac rule of user, otherwise if there is only one active session for the user
         the nf-fg will be de-instantiated
+
+        :param mac_address: the mac which rule has to be erased, if no one is specified, the whole NF_FG will be de-instantiated
         """
         # Returns the number of active session for the user, and if exists the session for the requested device
         num_sessions, session = Session().get_active_user_device_session(self.user_data.getUserID(), mac_address, error_aware=False)
@@ -99,7 +100,7 @@ class ServiceLayerController():
             nffg = self.orchestrator.getNFFG(session.service_graph_id)
             logging.debug('Old user profile :'+nffg.getJSON())
             
-            #profile_analisis = ProfileAnalisis()
+            # profile_analisis = ProfileAnalisis()
             manager = NFFG_Manager(nffg)
             manager.deleteMacAddressInFlows(mac_address, USER_INGRESS)
             logging.debug('New user profile :'+nffg.getJSON())
