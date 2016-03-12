@@ -16,7 +16,7 @@
             mysql> GRANT ALL PRIVILEGES ON service_layer.* TO 'service_layer'@'%' IDENTIFIED BY 'SL_DBPASS';    
             mysql> exit;
     
-    - Create tables in the orchestrator db:
+    - Create tables in the service_layer db:
             
             cd frog-service-layer
             mysql -u service_layer -p service_layer < db.sql
