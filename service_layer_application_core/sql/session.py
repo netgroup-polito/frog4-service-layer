@@ -19,8 +19,8 @@ class SessionModel(Base):
     Maps the database table session
     '''
     __tablename__ = 'session'
-    attributes = ['id', 'user_id', 'service_graph_id', 'service_graph_name', 'ingress_node','egress_node','status','started_at',
-                  'last_update','error','ended']
+    attributes = ['id', 'user_id', 'service_graph_id', 'service_graph_name', 'ingress_node', 'egress_node', 'status',
+                  'started_at', 'last_update', 'error', 'ended']
     id = Column(VARCHAR(64), primary_key=True)
     user_id = Column(VARCHAR(64))
     service_graph_id = Column(Text)
@@ -97,14 +97,21 @@ class Session(object):
         returns if exists an active session of the user
         '''
         session = get_session()
-        session_ref = session.query(SessionModel).filter_by(user_id = user_id).filter_by(ended = None).filter_by(error = None).first()
+        session_ref = session.query(SessionModel)\
+            .filter_by(user_id=user_id)\
+            .filter_by(ended=None)\
+            .filter_by(error=None)\
+            .first()
         if session_ref is None:
             raise SessionNotFound("Session Not Found")
         return session_ref
     
-    def get_active_user_device_session(self, user_id, mac_address = None, error_aware=True):
+    def get_active_user_device_session(self, user_id, mac_address=None, error_aware=True):
         '''
         returns if exists an active session of the user connected on the port of the switch passed
+        :param user_id:
+        :param mac_address:
+        :param mac_address:
         '''
         session = get_session()
         if error_aware is True:

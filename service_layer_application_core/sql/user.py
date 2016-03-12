@@ -26,9 +26,9 @@ class UserModel(Base):
     service_graph = Column(Text)
     
 class TenantModel(Base):
-    '''
+    """
     Maps the database table tenant
-    '''
+    """
     __tablename__ = 'tenant'
     attributes = ['id', 'name', 'description']
     id = Column(VARCHAR(64), primary_key=True)
@@ -43,15 +43,15 @@ class User(object):
     
     def getServiceGraph(self, username):
         session = get_session()
-        return session.query(UserModel).filter_by(name = username).one().service_graph
+        return session.query(UserModel).filter_by(name=username).one().service_graph
     
     def getUser(self, username):
         session = get_session()
         try:
-            return session.query(UserModel).filter_by(name = username).one()
+            return session.query(UserModel).filter_by(name=username).one()
         except Exception as ex:
             logging.error(ex)
-            raise UserNotFound("User not found: "+str(username))
+            raise UserNotFound("User not found: " + str(username))
     
     def getTenantName(self, tenant_id):
         session = get_session()
@@ -59,4 +59,4 @@ class User(object):
             return session.query(TenantModel).filter_by(id = tenant_id).one().name
         except Exception as ex:
             logging.error(ex)
-            raise TenantNotFound("User not found: "+str(tenant_id))
+            raise TenantNotFound("User not found: " + str(tenant_id))
