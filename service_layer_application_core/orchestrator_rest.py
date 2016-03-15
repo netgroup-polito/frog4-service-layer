@@ -43,6 +43,7 @@ class GlobalOrchestrator(object):
     
     def getNFFGStatus(self, nffg_id):
         resp = requests.get(self.get_status_url % (nffg_id), headers=self.headers, timeout=long(self.timeout))
+        logging.debug("HTTP response status code: " + str(resp.status_code))
         resp.raise_for_status()
         logging.debug("Check completed")
         return resp.text
@@ -58,7 +59,7 @@ class GlobalOrchestrator(object):
         return nffg
         
     def put(self, nffg):
-        resp = requests.put(self.put_url, data = nffg.getJSON(), headers=self.headers, timeout=long(self.timeout))
+        resp = requests.put(self.put_url, data=nffg.getJSON(domain=True), headers=self.headers, timeout=long(self.timeout))
         resp.raise_for_status()
         logging.debug("Put completed")
         return resp.text
