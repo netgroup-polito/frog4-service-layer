@@ -56,7 +56,7 @@
           },
           "actions":[
             {
-              "output":"vnf:ingress-00000001:L2Port:0"
+              "output_to_port":"vnf:ingress-00000001:L2Port:0"
             }
           ]
         },
@@ -68,7 +68,7 @@
           },
           "actions":[
             {
-              "output":"endpoint:00000001"
+              "output_to_port":"endpoint:00000001"
             }
           ]
         },
@@ -80,7 +80,7 @@
           },
           "actions":[
             {
-              "output":"vnf:ingress-00000001:L2Port:1"
+              "output_to_port":"vnf:ingress-00000001:L2Port:1"
             }
           ]
         },
@@ -92,7 +92,7 @@
           },
           "actions":[
             {
-              "output":"vnf:ingress-00000002:inout:0"
+              "output_to_port":"vnf:ingress-00000002:inout:0"
             }
           ]
         },
@@ -104,7 +104,7 @@
           },
           "actions":[
             {
-              "output":"vnf:ingress-00000001:L2Port:2"
+              "output_to_port":"vnf:ingress-00000001:L2Port:2"
             }
           ]
         },
@@ -116,7 +116,7 @@
           },
           "actions":[
             {
-              "output":"endpoint:00000002"
+              "output_to_port":"endpoint:00000002"
             }
           ]
         }

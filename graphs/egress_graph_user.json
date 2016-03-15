@@ -33,7 +33,7 @@
           },
           "actions":[
             {
-              "output":"vnf:egress-00000001:User:0"
+              "output_to_port":"vnf:egress-00000001:User:0"
             }
           ]
         },
@@ -45,7 +45,7 @@
           },
           "actions":[
             {
-              "output":"endpoint:00000001"
+              "output_to_port":"endpoint:00000001"
             }
           ]
         },
@@ -57,7 +57,7 @@
           },
           "actions":[
             {
-              "output":"vnf:egress-00000001:WAN:0"
+              "output_to_port":"vnf:egress-00000001:WAN:0"
             }
           ]
         },
@@ -69,7 +69,7 @@
           },
           "actions":[
             {
-              "output":"endpoint:00000002"
+              "output_to_port":"endpoint:00000002"
             }
           ]
         }
