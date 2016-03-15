@@ -77,6 +77,20 @@ CREATE TABLE IF NOT EXISTS `tenant` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `vnf_image`
+--
+
+CREATE TABLE IF NOT EXISTS `vnf_image` (
+  `id` varchar(255) NOT NULL,
+  `internal_id` varchar(255) NOT NULL,
+  `template` text NOT NULL,
+  `configuration_model` text,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
 
 --
 -- Dumping data for table `node`
