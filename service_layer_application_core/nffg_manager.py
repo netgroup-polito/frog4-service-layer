@@ -259,7 +259,7 @@ class NFFG_Manager(object):
         UserDefnedServiceFunction function that adds in the graph the ingress flow for a user device
         '''
         # Find ingress end-point
-        ingress_endpoint = self.nffg.getEndPointsFromName("INGRESS")[0]
+        ingress_endpoint = self.nffg.getEndPointsFromName("ingress")[0]
         # Find flow rules that connect the end-point
         ingress_flow_rules = self.nffg.getFlowRulesSendingTrafficFromEndPoint(ingress_endpoint.id)
         for ingress_flow_rule in ingress_flow_rules:

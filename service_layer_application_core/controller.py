@@ -98,12 +98,12 @@ class ServiceLayerController():
             logging.debug('Delete access for specific device')
             # Get profile from session
             nffg = self.orchestrator.getNFFG(session.service_graph_id)
-            logging.debug('Old user profile :'+nffg.getJSON())
+            logging.debug('Old user profile :'+nffg.getJSON(domain=True))
             
             # profile_analisis = ProfileAnalisis()
             manager = NFFG_Manager(nffg)
             manager.deleteMacAddressInFlows(mac_address, USER_INGRESS)
-            logging.debug('New user profile :'+nffg.getJSON())
+            logging.debug('New user profile :'+nffg.getJSON(domain=True))
             
             if DEBUG_MODE is False:      
                 # Call CA for update graph without rule for deleted device
@@ -147,7 +147,7 @@ class ServiceLayerController():
             self.addDeviceToNF_FG(mac_address, nffg)
             
             # Call orchestrator to update NF-FG
-            logging.debug('Call orchestrator sending the following NF-FG: '+nffg.getJSON())
+            logging.debug('Call orchestrator sending the following NF-FG: '+nffg.getJSON(domain=True))
             if DEBUG_MODE is False:
                 try:
                     self.orchestrator.put(nffg)
@@ -162,23 +162,26 @@ class ServiceLayerController():
         else:
             # New session for this user
             logging.debug('Instantiate profile')
-            session_id  = uuid.uuid4().hex
+            session_id = uuid.uuid4().hex
             Session().inizializeSession(session_id, self.user_data.getUserID(), nffg.id, nffg.name)
         
             # Manage profile
-            logging.debug("User service graph: "+nffg.getJSON())
-            self.prepareProfile(mac_address, nffg)  
+            logging.debug("User service graph: "+nffg.getJSON(domain=True))
+            self.prepareProfile(mac_address, nffg)
               
             # Call orchestrator to instantiate NF-FG
-            logging.debug('Calling orchestrator sending NF-FG: '+nffg.getJSON())
-            print nffg.getJSON()
+            logging.debug('Calling orchestrator sending NF-FG: '+nffg.getJSON(domain=True))
+            print 'Calling orchestrator to instantiate user forwarding graph.'
             if DEBUG_MODE is False:
                 try:
                     self.orchestrator.put(nffg)
-                except:
+                    logging.debug('Profile instantiated for user "'+self.user_data.username+'"')
+                    print 'Profile instantiated for user "'+self.user_data.username+'"'
+                except Exception as err:
+                    logging.debug(err.message)
                     Session().set_error(session_id)
-            logging.debug('Profile instantiated for user "'+self.user_data.username+'"')
-            print 'Profile instantiated for user "'+self.user_data.username+'"'
+                    logging.debug('Failed to instantiated profile for user "'+self.user_data.username+'"')
+                    print 'Failed to instantiated profile for user "'+self.user_data.username+'"'
             
         # Set mac address in the session
         if mac_address is not None:
@@ -233,7 +236,7 @@ class ServiceLayerController():
         manager.attachEgressNF_FG(egress_nf_fg)
 
         # Add control network
-        logging.debug('Adding controll network')
+        logging.debug('Adding control network')
         for vnf in nffg.vnfs:
             template = self.orchestrator.getTemplate(vnf.vnf_template_location)
             need_control_net, port = manager.checkIfControlNetIsNedeed(vnf, template)
@@ -268,10 +271,10 @@ class ServiceLayerController():
         
         # Add flow that permits to user device to reach his NF-FG  
         if mac_address is not None:
-            logging.debug('Adding device flows for mac address: '+str(mac_address))
+            logging.debug('Adding device flows for mac address: ' + str(mac_address))
             manager.setDeviceFlows(mac_address)
         else:
-            logging.warning("No mac address for user "+self.user_data.username)
+            logging.warning("No mac address for user " + self.user_data.username)
     
     def remoteConnection(self, nffg):
         """
