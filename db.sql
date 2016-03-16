@@ -91,6 +91,18 @@ CREATE TABLE IF NOT EXISTS `vnf_image` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `user_device`
+--
+
+CREATE TABLE IF NOT EXISTS `user_device` (
+  `session_id` varchar(64) NOT NULL,
+  `mac_address` varchar(64) NOT NULL,
+  PRIMARY KEY (`session_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
 
 --
 -- Dumping data for table `node`
