@@ -48,14 +48,14 @@ class Session(object):
         pass
     
     def inizializeSession(self, session_id, user_id, service_graph_id, service_graph_name):
-        '''
-        inizialize the session in db
-        '''
+        """
+        initialize the session in db
+        """
         session = get_session()  
         with session.begin():
-            session_ref = SessionModel(id=session_id, user_id = user_id, service_graph_id = service_graph_id, 
-                                started_at = datetime.datetime.now(), service_graph_name=service_graph_name,
-                                last_update = datetime.datetime.now(), status='inizialization')
+            session_ref = SessionModel(id=session_id, user_id = user_id, service_graph_id = service_graph_id,
+                                       started_at=datetime.datetime.now(), service_graph_name=service_graph_name,
+                                       last_update=datetime.datetime.now(), status='inizialization')
             session.add(session_ref)
         pass
 
@@ -70,17 +70,17 @@ class Session(object):
             session.query(SessionModel).filter_by(id = session_id).filter_by(ended = None).filter_by(error = None).update({"user_id":user_id})
     
     def updateSessionNode(self, session_id, ingress_node, egress_node):
-        '''
+        """
         store the session in db
-        '''
+        """
         session = get_session()  
         with session.begin():
             session.query(SessionModel).filter_by(id = session_id).filter_by(ended = None).filter_by(error = None).update({"last_update":datetime.datetime.now(), "ingress_node":ingress_node, "egress_node": egress_node})
     
     def updateSession(self, session_id, ingress_node, egress_node, status):
-        '''
+        """
         store the session in db
-        '''
+        """
         session = get_session()  
         with session.begin():
             session.query(SessionModel).filter_by(id = session_id).filter_by(ended = None).filter_by(error = None).update({"last_update":datetime.datetime.now(), "ingress_node":ingress_node, "egress_node": egress_node, 'status':status})
@@ -93,9 +93,9 @@ class Session(object):
     '''
             
     def get_active_user_session(self, user_id):
-        '''
+        """
         returns if exists an active session of the user
-        '''
+        """
         session = get_session()
         session_ref = session.query(SessionModel)\
             .filter_by(user_id=user_id)\
@@ -107,12 +107,12 @@ class Session(object):
         return session_ref
     
     def get_active_user_device_session(self, user_id, mac_address=None, error_aware=True):
-        '''
+        """
         returns if exists an active session of the user connected on the port of the switch passed
         :param user_id:
         :param mac_address:
         :param mac_address:
-        '''
+        """
         session = get_session()
         if error_aware is True:
             user_session = session.query(SessionModel).filter_by(user_id = user_id).filter_by(ended = None).filter_by(error = None).first()
@@ -131,35 +131,35 @@ class Session(object):
         raise SessionNotFound("Device not found in the user session")
     
     def set_ended(self, session_id):
-        '''
+        """
         Set the ended status for the session identified with session_id
-        '''
+        """
         session = get_session() 
         with session.begin():       
             session.query(SessionModel).filter_by(id=session_id).update({"ended":datetime.datetime.now()}, synchronize_session = False)
     
     def set_error_by_nffg_id(self, nffg_id):
-        '''
+        """
         Set the error status for the active session associated to the nffg id passed
-        '''
+        """
         session = get_session()
         with session.begin():     
             logging.debug("Put session for nffg "+str(nffg_id)+" in error")
             session.query(SessionModel).filter_by(service_graph_id=nffg_id).filter_by(ended = None).filter_by(error = None).update({"error":datetime.datetime.now()}, synchronize_session = False)
         
     def set_error(self, session_id):
-        '''
+        """
         Set the error status for the active session associated to the user id passed
-        '''
+        """
         session = get_session()
         with session.begin():
             logging.debug("Put session for session "+str(session_id)+" in error")
             session.query(SessionModel).filter_by(id=session_id).filter_by(ended = None).filter_by(error = None).update({"error":datetime.datetime.now()}, synchronize_session = False)
     
     def checkSession(self, user_id):
-        '''
+        """
         return true if there is already an active session of the user
-        '''
+        """
         session = get_session()
         user_session = session.query(SessionModel).filter_by(user_id = user_id).filter_by(ended = None).filter_by(error = None).first()
         if user_session is None:
@@ -168,9 +168,9 @@ class Session(object):
             return True
         
     def checkDeviceSession(self, user_id, mac_address):
-        '''
+        """
         return true if there is already an active session of the user with this mac
-        '''
+        """
         session = get_session()
         user_sessions =session.query(SessionModel).filter_by(user_id = user_id).filter_by(ended = None).filter_by(error = None).all()
         for user_session in user_sessions:
@@ -183,7 +183,7 @@ class Session(object):
     def add_mac_address_in_the_session(self, mac_address, session_id):
         session = get_session()
         with session.begin():     
-            user_device_ref = UserDeviceModel(session_id = session_id, mac_address=mac_address)
+            user_device_ref = UserDeviceModel(session_id=session_id, mac_address=mac_address)
             session.add(user_device_ref)
     
     def del_mac_address_in_the_session(self, mac_address, session_id):
