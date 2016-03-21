@@ -53,7 +53,7 @@ class Session(object):
         """
         session = get_session()  
         with session.begin():
-            session_ref = SessionModel(id=session_id, user_id = user_id, service_graph_id = service_graph_id,
+            session_ref = SessionModel(id=session_id, user_id=user_id, service_graph_id=service_graph_id,
                                        started_at=datetime.datetime.now(), service_graph_name=service_graph_name,
                                        last_update=datetime.datetime.now(), status='inizialization')
             session.add(session_ref)
@@ -109,26 +109,41 @@ class Session(object):
     def get_active_user_device_session(self, user_id, mac_address=None, error_aware=True):
         """
         returns if exists an active session of the user connected on the port of the switch passed
-        :param user_id:
-        :param mac_address:
-        :param mac_address:
+
+        :param user_id: the id of the user in database.
+        :param mac_address: if specified, search for this device in the session and raise if is not present.
+        :param error_aware: if passed as "False", include also sessions that have "error" column setted.
+        :return the number of devices for this user and the active session.
+        :raise SessionNotFound if user haven't active session or if the specified device is not in the session.
+
         """
         session = get_session()
         if error_aware is True:
-            user_session = session.query(SessionModel).filter_by(user_id = user_id).filter_by(ended = None).filter_by(error = None).first()
+            user_session = session.query(SessionModel)\
+                .filter_by(user_id=user_id)\
+                .filter_by(ended=None)\
+                .filter_by(error=None)\
+                .first()
         else:
-            user_session = session.query(SessionModel).filter_by(user_id = user_id).filter_by(ended = None).first()
+            user_session = session.query(SessionModel)\
+                .filter_by(user_id=user_id)\
+                .filter_by(ended=None)\
+                .first()
+
         if user_session is None:
             raise SessionNotFound("Session Not Found")
+
         if mac_address is None:
             return 1, user_session
-        logging.debug("MAC address:"+str(mac_address))
-        devices = session.query(UserDeviceModel).filter_by(session_id = user_session.id).all()
-        for device in devices:
-            logging.debug("device MAC address:"+str(device.mac_address)+" MAC address:"+str(mac_address))
-            if device.mac_address == mac_address:
-                return len(devices), user_session
-        raise SessionNotFound("Device not found in the user session")
+        else:
+            # search for the specified device in this session
+            logging.debug("MAC address: " + str(mac_address))
+            devices = session.query(UserDeviceModel).filter_by(session_id=user_session.id).all()
+            for device in devices:
+                logging.debug("device MAC address:"+str(device.mac_address)+" MAC address:"+str(mac_address))
+                if device.mac_address == mac_address:
+                    return len(devices), user_session
+            raise SessionNotFound("Device not found in the user session")
     
     def set_ended(self, session_id):
         """
