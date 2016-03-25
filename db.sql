@@ -103,16 +103,27 @@ CREATE TABLE IF NOT EXISTS `user_device` (
   PRIMARY KEY (`session_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+-- --------------------------------------------------------
 
 --
--- Dumping data for table `node`
+-- Table structure for table `user_location`
+--
+
+CREATE TABLE IF NOT EXISTS `user_location` (
+  `user_id` varchar(64) NOT NULL,
+  `node_id` varchar(64) NOT NULL,
+  PRIMARY KEY (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Dumping data for table `user`
 --
 
 REPLACE INTO `user` (`id`, `name`, `password`, `tenant_id`) VALUES
 ('0', 'user1', 'password1', 'public');
 
 --
--- Dumping data for table `user`
+-- Dumping data for table `node`
 --
 
 REPLACE INTO `node` (`id`, `name`, `domain_id`) VALUES
@@ -121,6 +132,13 @@ REPLACE INTO `node` (`id`, `name`, `domain_id`) VALUES
 ('2', 'node2', '10.0.0.3'),
 ('3', 'node3', '10.0.0.4'),
 ('4', 'node4', '10.0.0.5');
+
+--
+-- Dumping data for table `user_location`
+--
+
+REPLACE INTO `user_location` (`user_id`, `node_id`) VALUES
+('0', '0');
 
 --
 -- Dumping data for table `tenant`
