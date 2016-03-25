@@ -77,7 +77,8 @@ class ServiceLayer(object):
         The NF-FG is fetched from the database, and sent to the orchestrator (put).
 
         :param request: HEADER - user credential (X-Auth-User, X-Auth-Pass, X-Auth-Tenant)
-                        BODY - json that contain the MAC address of the user device, as {"session":{"mac":"fc:4d:e2:56:9f:19"}}
+                        BODY - json that contain the MAC address of the user device, as
+                        {"session":{"mac":"fc:4d:e2:56:9f:19"}}
         :param response: HTTP response code
         """
         try:
@@ -85,7 +86,7 @@ class ServiceLayer(object):
             # Now, it initialize a new controller instance to handle the request
             controller = ServiceLayerController(user_data)
             request_dict = json.load(request.stream, 'utf-8')
-            RequestValidator().validate(request_dict)
+            RequestValidator.validate(request_dict)
             if 'mac' in request_dict['session']:
                 controller.put(mac_address=request_dict['session']['mac'])
             else:
@@ -101,7 +102,6 @@ class ServiceLayer(object):
                                            json.loads(err.response.text))
             elif err.response.status_code == 404:
                 raise falcon.HTTPNotFound()
-            raise err
         except jsonschema.ValidationError as err:
             logging.exception(err.message)
             raise falcon.HTTPBadRequest('Bad Request', err.message)
@@ -110,7 +110,7 @@ class ServiceLayer(object):
             raise falcon.HTTPInternalServerError("Internal Server Error", "Malformed JSON")
         except falcon.HTTPError as err:
             logging.exception("Falcon " + err.title)
-            raise
+            raise err
         except UnauthorizedRequest as err:
             raise falcon.HTTPUnauthorized("Authentication error. ", err.message)
         except Exception as err:
