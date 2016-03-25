@@ -24,12 +24,12 @@ class GlobalOrchestrator(object):
         self.delete_url = self.base_url+"/NF-FG/%s"
         self.get_nffg_url = self.base_url+"/NF-FG/%s"   
         self.get_status_url = self.base_url+"/NF-FG/status/%s"  
-        self.get_template =  self.base_url+"/template/location/%s"
+        self.get_template = self.base_url+"/template/location/%s"
         self.headers = {'Content-Type': 'application/json',
-                    'cache-control': 'no-cache',
-                    'X-Auth-User': user_data.username,
-                    'X-Auth-Pass': user_data.password,
-                    'X-Auth-Tenant': user_data.tenant}
+                        'cache-control': 'no-cache',
+                        'X-Auth-User': user_data.username,
+                        'X-Auth-Pass': user_data.password,
+                        'X-Auth-Tenant': user_data.tenant}
         
     def getTemplate(self, vnf_template_location):
         resp = requests.get(self.get_template % (vnf_template_location), headers=self.headers, timeout=long(self.timeout))
