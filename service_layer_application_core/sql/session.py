@@ -62,7 +62,11 @@ class Session(object):
     def updateStatus(self, session_id, status):
         session = get_session()  
         with session.begin():
-            session.query(SessionModel).filter_by(id = session_id).filter_by(ended = None).filter_by(error = None).update({"last_update":datetime.datetime.now(), 'status':status})
+            session.query(SessionModel)\
+                .filter_by(id=session_id)\
+                .filter_by(ended=None)\
+                .filter_by(error=None)\
+                .update({"last_update":datetime.datetime.now(), 'status': status})
 
     def updateUserID(self, session_id, user_id):
         session = get_session()  
@@ -151,7 +155,9 @@ class Session(object):
         """
         session = get_session() 
         with session.begin():       
-            session.query(SessionModel).filter_by(id=session_id).update({"ended":datetime.datetime.now()}, synchronize_session = False)
+            session.query(SessionModel)\
+                .filter_by(id=session_id)\
+                .update({"ended": datetime.datetime.now()}, synchronize_session=False)
     
     def set_error_by_nffg_id(self, nffg_id):
         """
@@ -204,7 +210,10 @@ class Session(object):
     def del_mac_address_in_the_session(self, mac_address, session_id):
         session = get_session()
         with session.begin():     
-            session.query(UserDeviceModel).filter_by(session_id = session_id).filter_by(mac_address=mac_address).delete()
+            session.query(UserDeviceModel)\
+                .filter_by(session_id=session_id)\
+                .filter_by(mac_address=mac_address)\
+                .delete()
 
     def get_active_user_devices(self, user_id):
         session = get_session()
