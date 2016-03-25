@@ -59,4 +59,4 @@ class User(object):
             return session.query(TenantModel).filter_by(id = tenant_id).one().name
         except Exception as ex:
             logging.error(ex)
-            raise TenantNotFound("User not found: " + str(tenant_id))
+            raise TenantNotFound("Tenant not found: " + str(tenant_id))
