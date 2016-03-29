@@ -55,6 +55,7 @@ class ServiceLayerController:
         logging.debug("Graph id: " + session.service_graph_id)
 
         status = self.orchestrator.getNFFGStatus(session.service_graph_id)
+        logging.debug("Response from orchestrator: " + json.dumps(status))
         logging.debug("Status : "+status['status'])
         if status['status'] == "complete":
             code = falcon.HTTP_201
@@ -62,11 +63,9 @@ class ServiceLayerController:
             code = falcon.HTTP_202
 
         logging.debug("Username : "+self.user_data.username+", Resources : "+json.dumps(status))
-
-        self.response.body = json.dumps(status)
-        self.response.status = code
-
         logging.debug("GET from username: "+self.user_data.username+" completed")
+
+        return json.dumps(status), code
 
     def delete(self, mac_address):
         """

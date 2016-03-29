@@ -129,7 +129,7 @@ class ServiceLayer(object):
             logging.debug("Autenticated user: " + user_data.username)
             # Now, it initialize a new controller instance to handle the request
             controller = ServiceLayerController(user_data)
-            controller.get()
+            response.body, response.status = controller.get()
         except ValueError:
             logging.exception("Malformed JSON")
             raise falcon.HTTPError(falcon.HTTP_753,
