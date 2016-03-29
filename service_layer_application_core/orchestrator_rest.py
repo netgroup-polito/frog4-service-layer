@@ -6,6 +6,7 @@ Created on Jun 24, 2015
 import logging
 import requests
 import json
+import ast
 from service_layer_application_core.config import Configuration
 from vnf_template_library.template import Template
 from vnf_template_library.validator import ValidateTemplate
@@ -46,7 +47,8 @@ class GlobalOrchestrator(object):
         logging.debug("HTTP response status code: " + str(resp.status_code))
         resp.raise_for_status()
         logging.debug("Check completed")
-        return resp.text
+        dict_resp = ast.literal_eval(resp.text)
+        return dict_resp
     
     def getNFFG(self, nffg_id):
         resp = requests.get(self.get_nffg_url % (nffg_id), headers=self.headers, timeout=long(self.timeout))
