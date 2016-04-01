@@ -87,6 +87,7 @@ class ServiceLayerController:
         else:
             logging.debug("Delete user service graph: "+self.user_data.username)
         logging.debug("Number of devices for the user: "+str(num_sessions))
+        ended = None
         if num_sessions == 1:
             # De-instantiate User Profile Graph
             if DEBUG_MODE is False:
