@@ -23,7 +23,7 @@ class RequestValidator:
                             "type": "string"
                         }
                     },
-                    "additionalProperties": False
+                    "additionalProperties": True
                 }
             },
             "required": [

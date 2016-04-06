@@ -1,8 +1,8 @@
-'''
+"""
 Created on Feb 15, 2015
 
 @author: fabiomignini
-'''
+"""
 import logging, json
 from service_layer_application_core.nffg_manager import NFFG_Manager
 from service_layer_application_core.config import Configuration
@@ -33,7 +33,7 @@ class Endpoint(object):
             if endpoint.name == CONTROL_INGRESS or endpoint.name == ISP_INGRESS:
                 manage.connectEndpointSwitchToVNF(endpoint)
                 
-    def characterizeEndpoint(self, user_id = None):
+    def characterizeEndpoint(self, user_id=None):
         # Characterize INGRESS endpoint
         for endpoint in self.nffg.end_points:
             # Connects directly vnf with endpoint_switch, that means get rid of egress_endpoint           

@@ -1,8 +1,8 @@
-'''
+"""
 Created on Feb 15, 2015
 
 @author: fabiomignini
-'''
+"""
 import json
 import logging
 
@@ -19,10 +19,10 @@ class UserSession(object):
         self.token = token
         
     def checkSession(self, nffg_id, orchestrator):
-        '''
-        return true if there is already an active session of the user 
+        """
+        return true if there is already an active session of the user
         and it is really instantiated in a node
-        '''
+        """
 
         session_status = Session().checkSession(self.user_id)
         if session_status is True:
@@ -33,6 +33,9 @@ class UserSession(object):
                 except HTTPError as err:
                     if err.response.status_code == 404:
                         logging.debug("NFFG: "+str(nffg_id)+" not yet instantiated!")
+                        return False
+                    else:
+                        # if we are here maybe dbs haven't coherence
                         return False
                 if response['status'] != 'error' or response['status'] != 'not_found':
                     # The user profile is really instantiated
