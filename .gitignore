@@ -1,12 +1,10 @@
+*.conf
 *.pyc
 *.log
 *.project
 *.pydevproject
 *.DS_Store
 .DS_Store
-
-*/*.pyc
-*/*/*.pyc
 
 .idea/*
 .idea/.*
