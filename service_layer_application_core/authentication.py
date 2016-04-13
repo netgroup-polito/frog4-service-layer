@@ -261,7 +261,7 @@ class KeystoneAuthentication(object):
         '''
         if self.validateToken(self.keystone_server, self.orchToken, self.orchToken) is not True:
             try:
-                self.keystone_authentication_url.ServiceCreateToken();
+                self.keystone_authentication_url.ServiceCreateToken()
             except:
                 raise falcon.HTTPUnauthorized("HTTPUnauthorized", "Token not valid")
 
