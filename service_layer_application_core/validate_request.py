@@ -20,8 +20,21 @@ class RequestValidator:
                 "session": {
                     "type": "object",
                     "properties": {
-                        "mac": {
-                            "type": "string"
+                        "device": {
+                            "type": "object",
+                            "properties": {
+                                "mac": {
+                                    "type": "string"
+                                },
+                                "port": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "mac",
+                                "port"
+                            ],
+                            "additionalProperties": False
                         }
                     },
                     "additionalProperties": True

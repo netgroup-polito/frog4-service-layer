@@ -11,9 +11,11 @@ import logging
 
 from sqlalchemy.orm.exc import NoResultFound
 from service_layer_application_core.user_authentication import UserAuthentication
-from service_layer_application_core.exception import SessionNotFound, UnauthorizedRequest
+from service_layer_application_core.exception import SessionNotFound, UnauthorizedRequest, RequestValidationError
 from service_layer_application_core.controller import ServiceLayerController
 from service_layer_application_core.validate_request import RequestValidator
+
+from json.decoder import JSONDecodeError
 
 
 class ServiceLayer(object):
@@ -77,19 +79,22 @@ class ServiceLayer(object):
         The NF-FG is fetched from the database, and sent to the orchestrator (put).
 
         :param request: HEADER - user credential (X-Auth-User, X-Auth-Pass, X-Auth-Tenant)
-                        BODY - json that contain the MAC address of the user device, as
-                        {"session":{"mac":"fc:4d:e2:56:9f:19"}}
+                        BODY - json that contain the MAC address of the user device, and its virtual port as
+                        {"session":{"device":{"mac":"fc:4d:e2:56:9f:19", "port":"eth4"}}}
+                        or void session if no devices should be attached, like
+                        {"session":{}}
         :param response: HTTP response code
         """
         try:
             user_data = UserAuthentication().authenticateUserFromRESTRequest(request)
+            logging.debug("Authenticated user: " + user_data.username)
             # Now, it initialize a new controller instance to handle the request
             controller = ServiceLayerController(user_data)
             request_dict = json.loads(request.stream.read().decode())
             # request_dict = json.load(request.stream, 'utf-8')
             RequestValidator.validate(request_dict)
-            if 'mac' in request_dict['session']:
-                controller.put(mac_address=request_dict['session']['mac'])
+            if 'device' in request_dict['session']:
+                controller.put(mac_address=request_dict['session']['device']['mac'])
             else:
                 controller.put(mac_address=None)
             response.status = falcon.HTTP_202
@@ -103,7 +108,15 @@ class ServiceLayer(object):
                                            json.loads(err.response.text))
             elif err.response.status_code == 404:
                 raise falcon.HTTPNotFound()
+            else:
+                raise falcon.HTTPInternalServerError('Orchestrator Error.', json.loads(err.response.text))
+        except JSONDecodeError as err:
+            logging.exception(err)
+            raise falcon.HTTPBadRequest('Bad Request', str(err))
         except jsonschema.ValidationError as err:
+            logging.exception(err.message)
+            raise falcon.HTTPBadRequest('Bad Request', err.message)
+        except RequestValidationError as err:
             logging.exception(err.message)
             raise falcon.HTTPBadRequest('Bad Request', err.message)
         except ValueError:
