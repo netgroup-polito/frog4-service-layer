@@ -115,6 +115,67 @@ CREATE TABLE IF NOT EXISTS `user_location` (
   PRIMARY KEY (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `domain`
+--
+
+CREATE TABLE IF NOT EXISTS `domain` (
+  `id` int(11) NOT NULL,
+  `name` varchar(64) COLLATE utf8_unicode_ci NOT NULL,
+  `type` varchar(64) COLLATE utf8_unicode_ci NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `domain_information`
+--
+
+CREATE TABLE IF NOT EXISTS `domain_information` (
+  `id` int(64) NOT NULL,
+  `domain_id` int(11) NOT NULL,
+  `node` varchar(64) COLLATE utf8_unicode_ci NOT NULL,
+  `interface` varchar(64) COLLATE utf8_unicode_ci NOT NULL,
+  `interface_type` varchar(64) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `gre` tinyint(1) NOT NULL,
+  `vlan` tinyint(1) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `domain_gre`
+--
+
+CREATE TABLE IF NOT EXISTS `domain_gre` (
+  `id` int(64) NOT NULL,
+  `name` varchar(64) COLLATE utf8_unicode_ci NOT NULL,
+  `domain_info_id` int(64) NOT NULL,
+  `local_ip` varchar(64) COLLATE utf8_unicode_ci NOT NULL,
+  `remote_ip` varchar(64) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `gre_key` varchar(64) COLLATE utf8_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `domain_neighbor`
+--
+
+CREATE TABLE IF NOT EXISTS `domain_neighbor` (
+  `id` int(11) NOT NULL,
+  `domain_info_id` int(11) NOT NULL,
+  `neighbor_domain_name` varchar(64) COLLATE utf8_unicode_ci NOT NULL,
+  `neighbor_node` varchar(64) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `neighbor_interface` varchar(64) COLLATE utf8_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
 --
 -- Dumping data for table `user`
 --
