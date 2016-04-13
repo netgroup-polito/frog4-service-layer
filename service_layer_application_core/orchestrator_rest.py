@@ -33,7 +33,7 @@ class GlobalOrchestrator(object):
                         'X-Auth-Tenant': user_data.tenant}
         
     def getTemplate(self, vnf_template_location):
-        resp = requests.get(self.get_template % (vnf_template_location), headers=self.headers, timeout=long(self.timeout))
+        resp = requests.get(self.get_template % (vnf_template_location), headers=self.headers, timeout=int(self.timeout))
         resp.raise_for_status()
         template_dict = json.loads(resp.text)
         ValidateTemplate().validate(template_dict)
@@ -43,7 +43,7 @@ class GlobalOrchestrator(object):
         return template
     
     def getNFFGStatus(self, nffg_id):
-        resp = requests.get(self.get_status_url % (nffg_id), headers=self.headers, timeout=long(self.timeout))
+        resp = requests.get(self.get_status_url % (nffg_id), headers=self.headers, timeout=int(self.timeout))
         logging.debug("HTTP response status code: " + str(resp.status_code))
         resp.raise_for_status()
         logging.debug("Check completed")
@@ -51,7 +51,7 @@ class GlobalOrchestrator(object):
         return dict_resp
     
     def getNFFG(self, nffg_id):
-        resp = requests.get(self.get_nffg_url % (nffg_id), headers=self.headers, timeout=long(self.timeout))
+        resp = requests.get(self.get_nffg_url % (nffg_id), headers=self.headers, timeout=int(self.timeout))
         resp.raise_for_status()
         nffg_dict = json.loads(resp.text)
         ValidateNF_FG().validate(nffg_dict)
@@ -61,13 +61,13 @@ class GlobalOrchestrator(object):
         return nffg
         
     def put(self, nffg):
-        resp = requests.put(self.put_url, data=nffg.getJSON(domain=True), headers=self.headers, timeout=long(self.timeout))
+        resp = requests.put(self.put_url, data=nffg.getJSON(domain=True), headers=self.headers, timeout=int(self.timeout))
         resp.raise_for_status()
         logging.debug("Put completed")
         return resp.text
     
     def delete(self, nffg_id):
-        resp = requests.delete(self.delete_url % (nffg_id), headers=self.headers, timeout=long(self.timeout))
+        resp = requests.delete(self.delete_url % (nffg_id), headers=self.headers, timeout=int(self.timeout))
         resp.raise_for_status()
         logging.debug("Delete completed")
         return resp.text        

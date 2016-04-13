@@ -36,7 +36,7 @@ class ServiceLayer(object):
             controller = ServiceLayerController(user_data)
             controller.delete(mac_address=mac_address)
         except NoResultFound:
-            print "EXCEPTION - NoResultFound"
+            print("EXCEPTION - NoResultFound")
             raise falcon.HTTPNotFound()
         except requests.HTTPError as err:
             logging.exception(err.response.text)
@@ -68,7 +68,7 @@ class ServiceLayer(object):
             raise falcon.HTTPUnauthorized("Authentication error. ", err.message)
         except Exception as err:
             logging.exception(err)
-            raise falcon.HTTPInternalServerError('Contact the admin. ', err.message)
+            raise falcon.HTTPInternalServerError('Contact the admin. ', '')
 
     def on_put(self, request, response):
         """
@@ -115,7 +115,7 @@ class ServiceLayer(object):
             raise falcon.HTTPUnauthorized("Authentication error. ", err.message)
         except Exception as err:
             logging.exception(err)
-            raise falcon.HTTPInternalServerError('Contact the admin. ', err.message)
+            raise falcon.HTTPInternalServerError('Contact the admin. ', '')
 
     def on_get(self, request, response):
         """
@@ -156,4 +156,4 @@ class ServiceLayer(object):
             raise falcon.HTTPUnauthorized("Authentication error. ", err.message)
         except Exception as err:
             logging.exception(err)
-            raise falcon.HTTPInternalServerError('Contact the admin. ', err.message)
+            raise falcon.HTTPInternalServerError('Contact the admin. ', '')

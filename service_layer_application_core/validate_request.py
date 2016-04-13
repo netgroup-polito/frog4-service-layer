@@ -2,11 +2,12 @@
 Created on Oct 1, 2014
 
 @author: fabiomignini
+@author: gabrielecastellano
 """
 import logging
 
 from service_layer_application_core.exception import RequestValidationError
-from json_hyper_schema import Schema, ValidationError
+from jsonschema import validate, ValidationError
 
 
 class RequestValidator:
@@ -31,9 +32,8 @@ class RequestValidator:
             ],
             "additionalProperties": False
         }
-        hyper_schema = Schema(schema)
         try:
-            hyper_schema.validate(nffg)
+            validate(nffg, schema)
         except ValidationError as err:
             logging.info(err.message)
             raise RequestValidationError(err.message)

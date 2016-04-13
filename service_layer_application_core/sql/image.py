@@ -7,10 +7,8 @@ Created on Jul 16, 2015
 # These classes are never used on the service layer
 
 from sqlalchemy import Column, VARCHAR, Text
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 import logging
-from service_layer_application_core.config import Configuration
 from service_layer_application_core.sql.sql_server import get_session
 
 Base = declarative_base()

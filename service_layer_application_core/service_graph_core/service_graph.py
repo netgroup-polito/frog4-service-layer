@@ -107,7 +107,7 @@ class ServiceGraph(object):
         self.transformLANs()
         splitter_dict = {}
         for splitter in self.traffic_splitter_list:
-            print "    - "+splitter.traffic_splitter_id
+            print("    - " + splitter.traffic_splitter_id)
             splitter_dict[splitter.traffic_splitter_id] = splitter
         
         nffg = {}
@@ -224,7 +224,7 @@ class ServiceGraph(object):
                         else:
                             raise EndpointConnectionError("End-point connected directly to another end end-point")
                 if connected_object.isTrafficSplitter():
-                    print "Traffic Splitters connected to each other"
+                    print("Traffic Splitters connected to each other")
                     self.getConnectionFromTrafficSplitter(connected_object.port_id, splitter_dict, vnf, port, outgoing_flowrules_obj, ingoing_flowrules_obj)
                         
                                             
@@ -235,7 +235,7 @@ class ServiceGraph(object):
             if link.node1.isTrafficSplitter() and str(link.node1.node_id) == str(node.node_id) and str(link.node1.port_id) == str(node.port_id):
                 connectedObjects.append(link.node2)
             if link.node2.isTrafficSplitter() and str(link.node2.node_id) == str(node.node_id) and str(link.node2.port_id) == str(node.port_id):
-                connectedObjects(link.node1)
+                connectedObjects.append(link.node1)
         return connectedObjects
      
     def setFlowruleFromEndpoint(self, endpoint_id, match_id, vnf, port, priority=None):

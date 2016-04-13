@@ -9,4 +9,4 @@ from service_layer_application_core.sql.session import SessionModel
 session = get_session()
 session.query(SessionModel).delete()
 
-print "Database sessions deleted"
+print("Database sessions deleted")

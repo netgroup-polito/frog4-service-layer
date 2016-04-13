@@ -546,5 +546,5 @@ simple_graph = {
 
 sg = ServiceGraph()
 sg.loads(simple_graph)
-print sg.getNetworkFunctionForwardingGraph()
-print ValidateNF_FG(sg.getNetworkFunctionForwardingGraph(False)).validate()
+print(sg.getNetworkFunctionForwardingGraph())
+print(ValidateNF_FG(sg.getNetworkFunctionForwardingGraph(False)).validate())

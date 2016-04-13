@@ -96,7 +96,7 @@ class ServiceLayerController:
                 except:
                     Session().set_error(session.id)
             logging.debug('Deleted profile of user \"'+self.user_data.username+'\"')
-            print 'Deleted profile of user "'+self.user_data.username+'"'
+            print('Deleted profile of user "' + self.user_data.username + '"')
 
             # Set the field ended in the table session to the actual datatime
             Session().set_ended(session.id)
@@ -118,7 +118,7 @@ class ServiceLayerController:
                 except:
                     Session().set_error(session.id)
             logging.debug('Device deleted "'+mac_address+'" of user "'+self.user_data.username+'"')
-            print 'Device deleted "'+mac_address+'" of user "'+self.user_data.username+'"'
+            print('Device deleted "' + mac_address + '" of user "' + self.user_data.username + '"')
 
         if mac_address is not None:
             Session().del_mac_address_in_the_session(mac_address, session.id)
@@ -164,10 +164,10 @@ class ServiceLayerController:
                     raise err
             if mac_address is not None:
                 logging.debug('Added device "'+mac_address+'" of user "'+self.user_data.username+'"')
-                print 'Added device "'+mac_address+'" of user "'+self.user_data.username+'"'
+                print('Added device "' + mac_address + '" of user "' + self.user_data.username + '"')
             else:
                 logging.debug('User profile updated "'+self.user_data.username+'"')
-                print 'User profile updated "'+self.user_data.username+'"'
+                print('User profile updated "' + self.user_data.username + '"')
         else:
             # New session for this user
             logging.debug('Instantiate profile')
@@ -180,17 +180,17 @@ class ServiceLayerController:
 
             # Call orchestrator to instantiate NF-FG
             logging.debug('Calling orchestrator sending NF-FG: '+nffg.getJSON(domain=True))
-            print 'Calling orchestrator to instantiate user forwarding graph.'
+            print('Calling orchestrator to instantiate user forwarding graph.')
             if DEBUG_MODE is False:
                 try:
                     self.orchestrator.put(nffg)
                     logging.debug('Profile instantiated for user "'+self.user_data.username+'"')
-                    print 'Profile instantiated for user "'+self.user_data.username+'"'
+                    print('Profile instantiated for user "' + self.user_data.username + '"')
                 except Exception as err:
-                    logging.debug(err.message)
+                    logging.exception(err)
                     Session().set_error(session_id)
                     logging.debug('Failed to instantiated profile for user "'+self.user_data.username+'"')
-                    print 'Failed to instantiated profile for user "'+self.user_data.username+'"'
+                    print('Failed to instantiated profile for user "' + self.user_data.username + '"')
                     raise err
 
         # Set mac address in the session

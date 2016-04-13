@@ -563,5 +563,5 @@ nffg= {
 Session().add_session(1, 'supercazzola', 'nuc1', 'Demo-Turin-2015-day2', 'Protected_access_to_the_internet', 'nuc1', 'scheduling')
 nffg = NF_FG(nffg)
 Graph().addNFFG(nffg, 1)
-print Graph().get_nffg(1, encode=True)
+print(Graph().get_nffg(1, encode=True))
 

@@ -4,7 +4,7 @@ Created on 18 set 2015
 @author: Andrea
 '''
 
-from sql.user import User
+from .sql.user import User
 from service_layer_application_core.exception import UnauthorizedRequest
 
 class UserData(object):
