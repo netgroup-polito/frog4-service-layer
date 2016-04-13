@@ -48,6 +48,9 @@ class Configuration(object):
         self._SWITCH_NAME = [e.strip() for e in config.get('switch', 'switch_l2_name').split(',')]
         self._CONTROL_SWITCH_NAME = config.get('switch', 'switch_l2_control_name')
 
+        self._SERVICE_LAYER_IP = config.get('service_layer', 'ip')
+        self._SERVICE_LAYER_PORT = config.get('service_layer', 'port')
+
         self._DD_NAME = config.get('doubledecker', 'dd_name')
         self._DD_CUSTOMER = config.get('doubledecker', 'dd_customer')
         self._BROKER_ADDRESS = config.get('doubledecker', 'broker_address')
@@ -78,6 +81,14 @@ class Configuration(object):
         # Orchestrator
         self._ISP = config.getboolean('orchestrator', 'isp')
         self._NOBODY = config.getboolean('orchestrator', 'nobody')
+
+    @property
+    def SERVICE_LAYER_IP(self):
+        return self._SERVICE_LAYER_IP
+
+    @property
+    def SERVICE_LAYER_PORT(self):
+        return self._SERVICE_LAYER_PORT
 
     @property
     def ORCH_TIMEOUT(self):
