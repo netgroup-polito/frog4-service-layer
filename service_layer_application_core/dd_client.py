@@ -16,12 +16,13 @@ class DDClient(ClientSafe):
 
     def __init__(self, name, dealer_url, customer, keyfile):
         super().__init__(name, dealer_url, customer, keyfile)
+        logging.info("Doubledecker Client State: disconnected")
 
     def on_data(self, dst, msg):
         print(dst, " sent", msg)
 
     def on_discon(self):
-        pass
+        logging.info("Doubledecker Client State: disconnected")
 
     def on_pub(self, src, topic, msg):
         # new domain information
@@ -51,6 +52,7 @@ class DDClient(ClientSafe):
     # and there will be a registration infinite loop.
     # TODO publish an issue on dd repository
     def on_reg(self):
+        logging.info("Doubledecker Client State: connected")
         self.subscribe("frog:domain-description", "/0/0/0/")
 
     def unsubscribe(self, topic, scope):
