@@ -54,8 +54,8 @@ class ServiceLayerController:
         session = Session().get_active_user_session(self.user_data.getUserID())
         logging.debug("Graph id: " + session.service_graph_id)
 
-        status = self.orchestrator.getNFFGStatus(session.service_graph_id)
-        logging.debug("Response from orchestrator: " + json.dumps(status))
+        status = json.loads(self.orchestrator.getNFFGStatus(session.service_graph_id))
+        logging.debug("Response from orchestrator: " + str(status))
         logging.debug("Status : "+status['status'])
         if status['status'] == "complete":
             code = falcon.HTTP_201

@@ -47,8 +47,8 @@ class GlobalOrchestrator(object):
         logging.debug("HTTP response status code: " + str(resp.status_code))
         resp.raise_for_status()
         logging.debug("Check completed")
-        dict_resp = ast.literal_eval(resp.text)
-        return dict_resp
+        # dict_resp = ast.literal_eval(resp.text)
+        return resp.text
     
     def getNFFG(self, nffg_id):
         resp = requests.get(self.get_nffg_url % (nffg_id), headers=self.headers, timeout=int(self.timeout))

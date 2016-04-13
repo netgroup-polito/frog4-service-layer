@@ -68,7 +68,7 @@ class ServiceLayer(object):
             raise falcon.HTTPUnauthorized("Authentication error. ", err.message)
         except Exception as err:
             logging.exception(err)
-            raise falcon.HTTPInternalServerError('Contact the admin. ', '')
+            raise falcon.HTTPInternalServerError('Contact the admin. ', str(err))
 
     def on_put(self, request, response):
         """
@@ -85,7 +85,8 @@ class ServiceLayer(object):
             user_data = UserAuthentication().authenticateUserFromRESTRequest(request)
             # Now, it initialize a new controller instance to handle the request
             controller = ServiceLayerController(user_data)
-            request_dict = json.load(request.stream, 'utf-8')
+            request_dict = json.loads(request.stream.read().decode())
+            # request_dict = json.load(request.stream, 'utf-8')
             RequestValidator.validate(request_dict)
             if 'mac' in request_dict['session']:
                 controller.put(mac_address=request_dict['session']['mac'])
@@ -115,7 +116,7 @@ class ServiceLayer(object):
             raise falcon.HTTPUnauthorized("Authentication error. ", err.message)
         except Exception as err:
             logging.exception(err)
-            raise falcon.HTTPInternalServerError('Contact the admin. ', '')
+            raise falcon.HTTPInternalServerError('Contact the admin. ', str(err))
 
     def on_get(self, request, response):
         """
@@ -126,7 +127,7 @@ class ServiceLayer(object):
         """
         try:
             user_data = UserAuthentication().authenticateUserFromRESTRequest(request)
-            logging.debug("Autenticated user: " + user_data.username)
+            logging.debug("Authenticated user: " + user_data.username)
             # Now, it initialize a new controller instance to handle the request
             controller = ServiceLayerController(user_data)
             response.body, response.status = controller.get()
@@ -145,6 +146,7 @@ class ServiceLayer(object):
                 raise falcon.HTTPForbidden(json.loads(err.response.text)['error']['title'],
                                            json.loads(err.response.text))
             elif err.response.status_code == 404:
+                logging.exception("Graph not yet instantiated for this user.")
                 raise falcon.HTTPNotFound()
             raise err
         except SessionNotFound:
@@ -156,4 +158,4 @@ class ServiceLayer(object):
             raise falcon.HTTPUnauthorized("Authentication error. ", err.message)
         except Exception as err:
             logging.exception(err)
-            raise falcon.HTTPInternalServerError('Contact the admin. ', '')
+            raise falcon.HTTPInternalServerError('Contact the admin. ', str(err))
