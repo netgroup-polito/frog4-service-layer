@@ -170,6 +170,7 @@ class ServiceLayerController:
                 print('User profile updated "' + self.user_data.username + '"')
         else:
             # New session for this user
+            logging.debug('The FG for this user is not yet instantiated')
             logging.debug('Instantiate profile')
             session_id = uuid.uuid4().hex
             Session().inizializeSession(session_id, self.user_data.getUserID(), nffg.id, nffg.name)
