@@ -128,9 +128,8 @@ class ServiceLayerController:
     def put(self, mac_address):
         # Get user network function forwarding graph
         # TODO gabriele - check if getServiceGraph return null (no graph in db for this user)
-        service_graph_dict = json.loads(User().getServiceGraph(self.user_data.username))
-        nffg = NF_FG()
-        nffg.parseDict(service_graph_dict)
+        user_nffg_file = User().getServiceGraph(self.user_data.username)
+        nffg = NFFG_Manager.getNF_FGFromFile(user_nffg_file)
 
         # Check if the user have an active session
         if UserSession(self.user_data.getUserID(), self.user_data).checkSession(nffg.id, self.orchestrator) is True:
@@ -229,40 +228,42 @@ class ServiceLayerController:
 
         manager = NFFG_Manager(nffg)
 
-        # Get INGRESS NF-FG
-        logging.debug('Getting INGRESS NF-FG')
-        ingress_nf_fg = manager.getIngressNF_FG()
+        if nffg.name != 'Protected access to the internet':
+            # Get INGRESS NF-FG
+            logging.debug('Getting INGRESS NF-FG')
+            ingress_nf_fg = manager.getIngressNF_FG()
 
-        # Attach INGRESS NF_FG to USER_INGESS ENDPOINT
-        logging.debug('Attach INGRESS NF_FG to USER_INGESS ENDPOINT')
-        # logging.info(ingress_nf_fg.getJSON())
-        manager.attachIngressNF_FG(ingress_nf_fg)
+            # Attach INGRESS NF_FG to USER_INGESS ENDPOINT
+            logging.debug('Attach INGRESS NF_FG to USER_INGESS ENDPOINT')
+            # logging.info(ingress_nf_fg.getJSON())
+            manager.attachIngressNF_FG(ingress_nf_fg)
 
-        # Get EGRESS NF-FG
-        logging.debug('Getting EGRESS NF-FG')
-        egress_nf_fg = manager.getEgressNF_FG()
+            # Get EGRESS NF-FG
+            logging.debug('Getting EGRESS NF-FG')
+            egress_nf_fg = manager.getEgressNF_FG()
 
-        # Attach EGRESS NF_FG to USER_EGRESS ENDPOINT
-        logging.debug('Attach EGRESS NF_FG to USER_EGRESS ENDPOINT')
-        manager.attachEgressNF_FG(egress_nf_fg)
+            # Attach EGRESS NF_FG to USER_EGRESS ENDPOINT
+            logging.debug('Attach EGRESS NF_FG to USER_EGRESS ENDPOINT')
+            manager.attachEgressNF_FG(egress_nf_fg)
 
-        # Add control network
-        logging.debug('Adding control network')
-        for vnf in nffg.vnfs:
-            logging.debug('Getting template for vnf: ' + vnf.name + ' (file ' + vnf.vnf_template_location + ')')
-            template = self.orchestrator.getTemplate(vnf.vnf_template_location)
-            need_control_net, port = manager.checkIfControlNetIsNedeed(vnf, template)
-            if need_control_net is True:
-                if ISP is True and nffg.name != 'ISP_graph':
-                    control_switch = manager.addPortToControlNet(vnf, port.id, CONTROL_EGRESS)
-                else:
-                    control_switch = manager.addPortToControlNet(vnf, port.id, ISP_EGRESS)
+            # TODO add control connection also in auth graph?
+            # Add control network
+            logging.debug('Adding control network')
+            for vnf in nffg.vnfs:
+                logging.debug('Getting template for vnf: ' + vnf.name + ' (file ' + vnf.vnf_template_location + ')')
+                template = self.orchestrator.getTemplate(vnf.vnf_template_location)
+                need_control_net, port = manager.checkIfControlNetIsNedeed(vnf, template)
+                if need_control_net is True:
+                    if ISP is True and nffg.name != 'ISP_graph':
+                        control_switch = manager.addPortToControlNet(vnf, port.id, CONTROL_EGRESS)
+                    else:
+                        control_switch = manager.addPortToControlNet(vnf, port.id, ISP_EGRESS)
 
-                if nffg.name == 'ISP_graph':
-                    user_control_egress = manager.createEndPoint(CONTROL_INGRESS)
-                    port = manager.createSwitchPort(control_switch)
-                    control_switch.ports.append(port)
-                    manager.connectVNFAndEndPoint(vnf_id=control_switch.id, port_id=port.id, end_point_id=user_control_egress.id)
+                    if nffg.name == 'ISP_graph':
+                        user_control_egress = manager.createEndPoint(CONTROL_INGRESS)
+                        port = manager.createSwitchPort(control_switch)
+                        control_switch.ports.append(port)
+                        manager.connectVNFAndEndPoint(vnf_id=control_switch.id, port_id=port.id, end_point_id=user_control_egress.id)
 
         # TODO: if end-point is ... then connect to ISP
         # Create connection to another NF-FG
