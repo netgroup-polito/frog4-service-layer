@@ -285,7 +285,8 @@ class NFFG_Manager(object):
         """
         return self.getNF_FGFromFile(EGRESS_GRAPH_FILE)
 
-    def getNF_FGFromFile(self, file_name):
+    @staticmethod
+    def getNF_FGFromFile(file_name):
         """
         Read from file a nf-fg
         Returns a NF_FG Object

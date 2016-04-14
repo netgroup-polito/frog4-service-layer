@@ -180,32 +180,35 @@ CREATE TABLE IF NOT EXISTS `domain_neighbor` (
 -- Dumping data for table `user`
 --
 
-REPLACE INTO `user` (`id`, `name`, `password`, `tenant_id`) VALUES
-('0', 'user1', 'password1', 'public');
+REPLACE INTO `user` (`id`, `name`, `password`, `tenant_id`, `service_graph`) VALUES
+('0', 'admin', 'qwerty', '0', 'authentication_graph.json'),
+('1', 'user1', 'password1', '2', 'client_graph_1.json');
 
 --
 -- Dumping data for table `node`
 --
 
-REPLACE INTO `node` (`id`, `name`, `domain_id`) VALUES
-('0', 'node0', '130.192.225.105'),
-('1', 'node1', '130.192.225.193'),
-('2', 'node2', '10.0.0.3'),
-('3', 'node3', '10.0.0.4'),
-('4', 'node4', '10.0.0.5');
+--REPLACE INTO `node` (`id`, `name`, `domain_id`) VALUES
+--('0', 'node0', '130.192.225.105'),
+--('1', 'node1', '130.192.225.193'),
+--('2', 'node2', '10.0.0.3'),
+--('3', 'node3', '10.0.0.4'),
+--('4', 'node4', '10.0.0.5');
 
 --
 -- Dumping data for table `user_location`
 --
 
-REPLACE INTO `user_location` (`user_id`, `node_id`) VALUES
-('0', '0');
+--REPLACE INTO `user_location` (`user_id`, `node_id`) VALUES
+--('0', '0');
 
 --
 -- Dumping data for table `tenant`
 --
 
 REPLACE INTO `tenant` (`id`, `name`, `description`) VALUES
-('public', 'public', 'public tenant');
+('0', 'admin', 'admin tenant'),
+('1', 'isp', 'isp tenant'),
+('2', 'public', 'public tenant');
 
 

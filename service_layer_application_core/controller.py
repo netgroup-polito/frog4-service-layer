@@ -184,13 +184,13 @@ class ServiceLayerController:
             if DEBUG_MODE is False:
                 try:
                     self.orchestrator.put(nffg)
-                    logging.debug('Profile instantiated for user "'+self.user_data.username+'"')
+                    logging.debug("Profile instantiated for user '"+self.user_data.username+"'")
                     print('Profile instantiated for user "' + self.user_data.username + '"')
                 except Exception as err:
                     logging.exception(err)
                     Session().set_error(session_id)
-                    logging.debug('Failed to instantiated profile for user "'+self.user_data.username+'"')
-                    print('Failed to instantiated profile for user "' + self.user_data.username + '"')
+                    logging.debug("Failed to instantiated profile for user '"+self.user_data.username+"'")
+                    print("Failed to instantiated profile for user '"+self.user_data.username+"'")
                     raise err
 
         # Set mac address in the session
@@ -206,7 +206,7 @@ class ServiceLayerController:
         if session_mac_addresses is not None:
             mac_addresses = mac_addresses+session_mac_addresses
         if mac_address is not None:
-            logging.debug('new MAC : '+str(mac_address))
+            logging.debug('new MAC: '+str(mac_address))
             mac_addresses.append(str(mac_address))
         logging.debug('MAC addresses: '+str(mac_addresses))
 
@@ -222,13 +222,26 @@ class ServiceLayerController:
         # use the new graph to add all the mac (both those old and that new)
         if len(mac_addresses) != 0:
             manager = NFFG_Manager(nffg)
+            # TODO addDevicesFlows doesn't work if there are more than one INGRESS end-points
             manager.addDevicesFlows(mac_addresses)
 
     def _prepareProfile(self, nffg, already_connected=False):
+        """
+        This method performs the following modification to the graph passed as argument:
+         if it is an user graph, ingress and egress graph are attached;
+         a control connection is added to all VNFs that need it;
+         the graph is attached to the ISP;
+         useless VNFs are merged;
+         each endpoint is characterized, so the type and relative details are added.
+
+        :param nffg: the graph to prepare
+        :param already_connected:
+        :return:
+        """
 
         manager = NFFG_Manager(nffg)
 
-        if nffg.name != 'Protected access to the internet':
+        if nffg.name != 'Authentication-Graph':
             # Get INGRESS NF-FG
             logging.debug('Getting INGRESS NF-FG')
             ingress_nf_fg = manager.getIngressNF_FG()
@@ -246,24 +259,23 @@ class ServiceLayerController:
             logging.debug('Attach EGRESS NF_FG to USER_EGRESS ENDPOINT')
             manager.attachEgressNF_FG(egress_nf_fg)
 
-            # TODO add control connection also in auth graph?
-            # Add control network
-            logging.debug('Adding control network')
-            for vnf in nffg.vnfs:
-                logging.debug('Getting template for vnf: ' + vnf.name + ' (file ' + vnf.vnf_template_location + ')')
-                template = self.orchestrator.getTemplate(vnf.vnf_template_location)
-                need_control_net, port = manager.checkIfControlNetIsNedeed(vnf, template)
-                if need_control_net is True:
-                    if ISP is True and nffg.name != 'ISP_graph':
-                        control_switch = manager.addPortToControlNet(vnf, port.id, CONTROL_EGRESS)
-                    else:
-                        control_switch = manager.addPortToControlNet(vnf, port.id, ISP_EGRESS)
+        # Add control network
+        logging.debug('Adding control network')
+        for vnf in nffg.vnfs:
+            logging.debug('Getting template for vnf: ' + vnf.name + ' (file ' + vnf.vnf_template_location + ')')
+            template = self.orchestrator.getTemplate(vnf.vnf_template_location)
+            need_control_net, port = manager.checkIfControlNetIsNedeed(vnf, template)
+            if need_control_net is True:
+                if ISP is True and nffg.name != 'ISP_graph':
+                    control_switch = manager.addPortToControlNet(vnf, port.id, CONTROL_EGRESS)
+                else:
+                    control_switch = manager.addPortToControlNet(vnf, port.id, ISP_EGRESS)
 
-                    if nffg.name == 'ISP_graph':
-                        user_control_egress = manager.createEndPoint(CONTROL_INGRESS)
-                        port = manager.createSwitchPort(control_switch)
-                        control_switch.ports.append(port)
-                        manager.connectVNFAndEndPoint(vnf_id=control_switch.id, port_id=port.id, end_point_id=user_control_egress.id)
+                if nffg.name == 'ISP_graph':
+                    user_control_egress = manager.createEndPoint(CONTROL_INGRESS)
+                    port = manager.createSwitchPort(control_switch)
+                    control_switch.ports.append(port)
+                    manager.connectVNFAndEndPoint(vnf_id=control_switch.id, port_id=port.id, end_point_id=user_control_egress.id)
 
         # TODO: if end-point is ... then connect to ISP
         # Create connection to another NF-FG
@@ -276,6 +288,14 @@ class ServiceLayerController:
         Endpoint(nffg).characterizeEndpoint(User().getUser(self.user_data.username).id)
 
     def prepareProfile(self, mac_address, nffg):
+        """
+        This function transform the Service Graph passed to a Forwarding Graph.
+        In addition adds the flow rule for the user device.
+
+        :param mac_address: if specified, an ingress flow rule for this device will be added to the nffg
+        :param nffg: the graph to prepare
+        :return:
+        """
         # Transform profile in NF_FG
         manager = NFFG_Manager(nffg)
 
@@ -284,9 +304,10 @@ class ServiceLayerController:
         # Add flow that permits to user device to reach his NF-FG  
         if mac_address is not None:
             logging.debug('Adding device flows for mac address: ' + str(mac_address))
+            # TODO setDeviceFlows doesn't work if there are more than one INGRESS end-points
             manager.setDeviceFlows(mac_address)
         else:
-            logging.warning("No mac address for user " + self.user_data.username)
+            logging.warning("No mac address specified for this request (user '" + self.user_data.username + "')")
 
     def remoteConnection(self, nffg):
         """

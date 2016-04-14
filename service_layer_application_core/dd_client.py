@@ -7,9 +7,11 @@ Created on Apr 12, 2016
 from doubledecker.clientSafe import ClientSafe
 import logging
 import json
+
 from .domain_info import DomainInfo
 from .sql.domain import Domain
 from .sql.domains_info import DomainInformation
+from .authentication_graph_manager import AuthGraphManager
 
 
 class DDClient(ClientSafe):
@@ -17,6 +19,7 @@ class DDClient(ClientSafe):
     def __init__(self, name, dealer_url, customer, keyfile):
         super().__init__(name, dealer_url, customer, keyfile)
         logging.info("Doubledecker Client State: disconnected")
+        self.auth_graph_manager = AuthGraphManager()
 
     def on_data(self, dst, msg):
         print(dst, " sent", msg)
@@ -32,7 +35,6 @@ class DDClient(ClientSafe):
 
         try:
             domain = src.decode("utf-8")
-
             domain_info = json.loads(msg.decode("utf-8"))
 
             # domain info
@@ -44,6 +46,19 @@ class DDClient(ClientSafe):
 
             logging.debug("Domain information arrived from %s: %s" % (domain, json.dumps(domain_info)))
             DomainInformation().add_domain_info(di)
+
+            # if the authentication graph is not in the network, and this is a compatible domain,
+            # we try to instantiate it here:
+            auth_graph_manager = AuthGraphManager()
+            if not auth_graph_manager.is_instantiated():
+                auth_graph_manager.instantiate(di)
+
+            if auth_graph_manager.is_instantiated():
+                # TODO if the new domain have user end point, we need to attach them to the current auth graph
+                pass
+
+            # TODO if no authentication graph, we should buffer all end points for later
+
         except Exception as ex:
             logging.exception(ex)
 

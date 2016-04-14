@@ -88,6 +88,7 @@ class ServiceLayer(object):
         try:
             user_data = UserAuthentication().authenticateUserFromRESTRequest(request)
             logging.debug("Authenticated user: " + user_data.username)
+            # TODO what should I do if the user is an ISP?
             # Now, it initialize a new controller instance to handle the request
             controller = ServiceLayerController(user_data)
             request_dict = json.loads(request.stream.read().decode())
