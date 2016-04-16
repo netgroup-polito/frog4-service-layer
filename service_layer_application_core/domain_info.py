@@ -32,6 +32,13 @@ class DomainInfo(object):
             raise TypeError("Tried to add an interface with a wrong type. Expected Interface, found " + type(interface))
 
     def getInterface(self, node, name):
+        """
+
+        :param node: the IP of the interface
+        :param name: the name of the interface searched
+        :return: the interface of the node specified having the passed name
+        :rtype: Interface
+        """
         for interface in self.interfaces:
             if interface.node == node and interface.name == name:
                 return interface

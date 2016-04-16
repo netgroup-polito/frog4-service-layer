@@ -11,7 +11,8 @@ import logging
 
 from sqlalchemy.orm.exc import NoResultFound
 from service_layer_application_core.user_authentication import UserAuthentication
-from service_layer_application_core.exception import SessionNotFound, UnauthorizedRequest, RequestValidationError
+from service_layer_application_core.exception import SessionNotFound, UnauthorizedRequest, RequestValidationError, \
+    GraphNotFound
 from service_layer_application_core.controller import ServiceLayerController
 from service_layer_application_core.validate_request import RequestValidator
 
@@ -128,6 +129,8 @@ class ServiceLayer(object):
             raise err
         except UnauthorizedRequest as err:
             raise falcon.HTTPUnauthorized("Authentication error. ", err.message)
+        except GraphNotFound as err:
+            raise falcon.HTTPForbidden("Graph not found. ", err.message)
         except Exception as err:
             logging.exception(err)
             raise falcon.HTTPInternalServerError('Contact the admin. ', str(err))

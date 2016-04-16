@@ -30,6 +30,12 @@ class Domain(object):
 
     @staticmethod
     def get_domain(domain_id):
+        """
+
+        :param domain_id:
+        :return:
+        :rtype: DomainModel
+        """
         session = get_session()
         try:
             return session.query(DomainModel).filter_by(id=domain_id).one()

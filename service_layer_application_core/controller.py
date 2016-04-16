@@ -18,7 +18,7 @@ from service_layer_application_core.common.user_session import UserSession
 from service_layer_application_core.common.endpoint import Endpoint
 from service_layer_application_core.orchestrator_rest import GlobalOrchestrator
 from service_layer_application_core.user_authentication import UserData
-from service_layer_application_core.exception import SessionNotFound, ISPNotDeployed
+from service_layer_application_core.exception import SessionNotFound, ISPNotDeployed, GraphNotFound
 
 ISP = Configuration().ISP
 ISP_USERNAME = Configuration().ISP_USERNAME
@@ -66,6 +66,16 @@ class ServiceLayerController:
         logging.debug("GET from username: "+self.user_data.username+" completed")
 
         return json.dumps(status), code
+
+    def get_nffg(self):
+
+        session = Session().get_active_user_session(self.user_data.getUserID())
+        logging.debug("Graph id: " + session.service_graph_id)
+
+        nffg = self.orchestrator.getNFFG(session.service_graph_id)
+        logging.debug("Got graph '" + session.service_graph_id + "' from orchestrator.")
+
+        return nffg
 
     def delete(self, mac_address):
         """
@@ -125,11 +135,29 @@ class ServiceLayerController:
         # TODO gabriele - if num_sessions == 1 this query will fail because it filters on "ended = NONE"
         Session().updateStatus(session.id, 'deleted')
 
-    def put(self, mac_address):
+    def put(self, mac_address=None, domain_name=None, nffg=None):
+        """
+
+        :param mac_address:
+        :param domain_name:
+        :param nffg:
+        :type mac_address: str
+        :type domain_name: str
+        :type nffg: NF_FG
+        :return:
+        """
+
         # Get user network function forwarding graph
-        # TODO gabriele - check if getServiceGraph return null (no graph in db for this user)
-        user_nffg_file = User().getServiceGraph(self.user_data.username)
-        nffg = NFFG_Manager.getNF_FGFromFile(user_nffg_file)
+        if nffg is None:
+            # TODO gabriele - check if getServiceGraph returns null (no graph in db for this user)
+            nffg_file = User().getServiceGraph(self.user_data.username)
+            if nffg_file is None:
+                raise GraphNotFound("No graph defined for the user '" + self.user_data.username + "'")
+            nffg = NFFG_Manager.getNF_FGFromFile(nffg_file)
+
+        # if domain is specified, label the nffg with it
+        if domain_name is not None:
+            nffg.domain = domain_name
 
         # Check if the user have an active session
         if UserSession(self.user_data.getUserID(), self.user_data).checkSession(nffg.id, self.orchestrator) is True:
@@ -142,13 +170,13 @@ class ServiceLayerController:
 
             # Manage new device
             if Session().checkDeviceSession(self.user_data.getUserID(), mac_address) is True:
-                """
+                '''
                  A rule for this mac address is already implemented,
-                 only an update of the graph is needed 
-                 (This update is necessary only if the graph is different from the last instantiated, 
+                 only an update of the graph is needed
+                 (This update is necessary only if the graph is different from the last instantiated,
                  but in this moment the graph is always re-instantiated, will be the orchestrator accountable
                  for a smart update of the FG).
-                """
+                '''
                 mac_address = None
 
             self.addDeviceToNF_FG(mac_address, nffg)
@@ -180,12 +208,12 @@ class ServiceLayerController:
 
             # Call orchestrator to instantiate NF-FG
             logging.debug('Calling orchestrator sending NF-FG: '+nffg.getJSON(domain=True))
-            print('Calling orchestrator to instantiate user forwarding graph.')
+            print("Calling orchestrator to instantiate '"+self.user_data.username+"' forwarding graph.")
             if DEBUG_MODE is False:
                 try:
                     self.orchestrator.put(nffg)
                     logging.debug("Profile instantiated for user '"+self.user_data.username+"'")
-                    print('Profile instantiated for user "' + self.user_data.username + '"')
+                    print("Profile instantiated for user '"+self.user_data.username+"'")
                 except Exception as err:
                     logging.exception(err)
                     Session().set_error(session_id)

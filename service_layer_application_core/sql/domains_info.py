@@ -91,6 +91,19 @@ class DomainInformation(object):
         return domains_info_list
 
     @staticmethod
+    def get_domain_info_by_interface(domain_id, interface):
+        """
+
+        :param domain_id:
+        :param interface:
+        :return:
+        :rtype: DomainsInformationModel
+        """
+        session = get_session()
+        domain_info = session.query(DomainsInformationModel).filter_by(domain_id=domain_id, interface=interface).first()
+        return domain_info
+
+    @staticmethod
     def get_domain_id_from_node(node):
         session = get_session()
         with session.begin():
@@ -98,6 +111,25 @@ class DomainInformation(object):
             if domain is None:
                 return None
             return domain.domain_id
+
+    @staticmethod
+    def get_node_by_interface(domain_id, interface):
+        """
+
+        :param domain_id:
+        :param interface:
+        :return:
+        :rtype: str
+        """
+        session = get_session()
+        with session.begin():
+            domain = session.query(DomainsInformationModel)\
+                .filter_by(domain_id=domain_id)\
+                .filter_by(interface=interface)\
+                .first()
+            if domain is None:
+                return None
+            return domain.node
 
     def add_domain_info(self, domain_info, update=False):
         """
@@ -171,3 +203,46 @@ class DomainInformation(object):
     def _get_higher_neighbor_id():
         session = get_session()
         return session.query(func.max(DomainsNeighborModel.id).label("max_id")).one().max_id
+
+    @staticmethod
+    def get_domain_gre(domain_gre_id):
+        """
+
+        :param domain_gre_id:
+        :return:
+        :rtype: DomainsGreModel
+        """
+        session = get_session()
+        return session.query(DomainsGreModel).filter_by(id=domain_gre_id).one()
+
+    @staticmethod
+    def add_domain_gre(domain_name, domain_info_id, local_ip, remote_ip, gre_key, domain_gre_id=None):
+        session = get_session()
+
+        with session.begin():
+            if domain_gre_id is not None:
+                _id = domain_gre_id
+                domain_gre_refs = session.query(DomainsGreModel).all()
+                for domain_gre_ref in domain_gre_refs:
+                    if domain_gre_ref.id == domain_gre_id:
+                        # TODO create an exception
+                        raise Exception
+            else:
+                max_id = -1
+                domain_gre_refs = session.query(DomainsGreModel).all()
+                for domain_gre_ref in domain_gre_refs:
+                    if domain_gre_ref.id > max_id:
+                        max_id = domain_gre_ref.id
+                    if domain_gre_ref.domain_info_id == domain_info_id:
+                        return domain_gre_ref.id
+                _id = max_id+1
+            domain_gre = DomainsGreModel(
+                id=_id,
+                name=domain_name,
+                domain_info_id=domain_info_id,
+                local_ip=local_ip,
+                remote_ip=remote_ip,
+                gre_key=gre_key
+            )
+            session.add(domain_gre)
+            return domain_gre.id

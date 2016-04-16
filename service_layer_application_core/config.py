@@ -2,6 +2,7 @@
 Created on Oct 1, 2014
 
 @author: fabiomignini
+@author: gabrielecastellano
 """
 import configparser
 import inspect
@@ -35,6 +36,7 @@ class Configuration(object):
         self._NOBODY_USERNAME = config.get('nobody', 'username')
         self._NOBODY_PASSWORD = config.get('nobody', 'password')
         self._NOBODY_TENANT = config.get('nobody', 'tenant')
+        self._ADMIN_NAME = config.get('admin', 'admin_name')
 
         self._ISP_USERNAME = config.get('ISP', 'username')
         self._ISP_PASSWORD = config.get('ISP', 'password')
@@ -42,6 +44,8 @@ class Configuration(object):
 
         self._INGRESS_PORT = config.get('user_connection', 'ingress_port')
         self._INGRESS_TYPE = config.get('user_connection', 'ingress_type')
+        self._REMOTE_INGRESS_PORT = config.get('user_connection', 'remote_ingress_port')
+        self._REMOTE_INGRESS_TYPE = config.get('user_connection', 'remote_ingress_type')
         self._EGRESS_PORT = config.get('user_connection', 'egress_port')
         self._EGRESS_TYPE = config.get('user_connection', 'egress_type')
 
@@ -72,6 +76,7 @@ class Configuration(object):
         self._SG_USER_INGRESS = config.get('endpoint_type', 'sg_user_ingress')
         self._SG_USER_EGRESS = config.get('endpoint_type', 'sg_user_egress')
         self._USER_INGRESS = config.get('endpoint_type', 'user_ingress')
+        self._REMOTE_USER_INGRESS = config.get('endpoint_type', 'remote_user_ingress')
         self._USER_EGRESS = config.get('endpoint_type', 'user_egress')
         self._ISP_INGRESS = config.get('endpoint_type', 'isp_ingress')
         self._ISP_EGRESS = config.get('endpoint_type', 'isp_egress')
@@ -103,6 +108,10 @@ class Configuration(object):
         return self._NOBODY
 
     @property
+    def ADMIN_NAME(self):
+        return self._ADMIN_NAME
+
+    @property
     def SG_USER_INGRESS(self):
         return self._SG_USER_INGRESS
 
@@ -113,6 +122,10 @@ class Configuration(object):
     @property
     def USER_INGRESS(self):
         return self._USER_INGRESS
+
+    @property
+    def REMOTE_USER_INGRESS(self):
+        return self._REMOTE_USER_INGRESS
 
     @property
     def USER_EGRESS(self):
@@ -175,6 +188,18 @@ class Configuration(object):
         return self._INGRESS_TYPE
 
     @property
+    def INGRESS_PORT(self):
+        return self._INGRESS_PORT
+
+    @property
+    def REMOTE_INGRESS_TYPE(self):
+        return self._REMOTE_INGRESS_TYPE
+
+    @property
+    def REMOTE_INGRESS_PORT(self):
+        return self._REMOTE_INGRESS_PORT
+
+    @property
     def ISP_USERNAME(self):
         return self._ISP_USERNAME
 
@@ -213,10 +238,6 @@ class Configuration(object):
     @property
     def ORCH_PORT(self):
         return self._ORCH_PORT
-
-    @property
-    def INGRESS_PORT(self):
-        return self._INGRESS_PORT
 
     @property
     def NOBODY_USERNAME(self):

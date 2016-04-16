@@ -46,6 +46,12 @@ class User(object):
         return session.query(UserModel).filter_by(name=username).one().service_graph
     
     def getUser(self, username):
+        """
+
+        :param username:
+        :return:
+        :rtype: UserModel
+        """
         session = get_session()
         try:
             return session.query(UserModel).filter_by(name=username).one()

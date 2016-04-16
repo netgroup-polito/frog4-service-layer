@@ -123,3 +123,23 @@ class SessionNotFound(Exception):
 
     def get_mess(self):
         return self.message
+
+
+class GraphNotFound(Exception):
+    def __init__(self, message):
+        self.message = message
+        # Call the base class constructor with the parameters it needs
+        super(GraphNotFound, self).__init__(message)
+
+    def get_mess(self):
+        return self.message
+
+
+class GreIdNotFound(Exception):
+    def __init__(self, message):
+        self.message = message
+        # Call the base class constructor with the parameters it needs
+        super(GreIdNotFound, self).__init__(message)
+
+    def get_mess(self):
+        return self.message
