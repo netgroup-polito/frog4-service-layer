@@ -22,7 +22,7 @@ class DDClient(ClientSafe):
         # request to instantiate the authentication graph on the default domain
         auth_graph_manager = AuthGraphManager()
         if not auth_graph_manager.is_instantiated():
-            auth_graph_manager.instantiate()
+            auth_graph_manager.instantiate_auth_graph()
 
     def on_data(self, dst, msg):
         print(dst, " sent", msg)
@@ -54,7 +54,7 @@ class DDClient(ClientSafe):
             # we try to instantiate it here:
             auth_graph_manager = AuthGraphManager()
             if not auth_graph_manager.is_instantiated():
-                auth_graph_manager.instantiate(di)
+                auth_graph_manager.instantiate_auth_graph(di)
 
             # add this new domain as end-point in the instantiated authentication graph
             if auth_graph_manager.is_instantiated():
