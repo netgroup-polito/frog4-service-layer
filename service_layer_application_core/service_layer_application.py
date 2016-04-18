@@ -98,7 +98,7 @@ class ServiceLayer(object):
             if 'device' in request_dict['session']:
                 controller.put(mac_address=request_dict['session']['device']['mac'])
             else:
-                controller.put(mac_address=None)
+                controller.put()
             response.status = falcon.HTTP_202
         except requests.HTTPError as err:
             logging.exception(err.response.text)
