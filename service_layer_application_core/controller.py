@@ -190,11 +190,11 @@ class ServiceLayerController:
                     Session().set_error(session_id)
                     raise err
             if mac_address is not None:
-                logging.debug('Added device "'+mac_address+'" of user "'+self.user_data.username+'"')
-                print('Added device "' + mac_address + '" of user "' + self.user_data.username + '"')
+                logging.info("Added device '"+mac_address+"' of user '"+self.user_data.username+"'")
+                print("Added device '"+mac_address+"' of user '"+self.user_data.username+"'")
             else:
-                logging.debug('User profile updated "'+self.user_data.username+'"')
-                print('User profile updated "' + self.user_data.username + '"')
+                logging.info("User profile updated '"+self.user_data.username+"'")
+                print("User profile updated '"+self.user_data.username+"'")
         else:
             # New session for this user
             logging.debug('The FG for this user is not yet instantiated')
@@ -274,8 +274,8 @@ class ServiceLayerController:
             logging.debug('Getting INGRESS NF-FG')
             ingress_nf_fg = manager.getIngressNF_FG()
 
-            # Attach INGRESS NF_FG to USER_INGESS ENDPOINT
-            logging.debug('Attach INGRESS NF_FG to USER_INGESS ENDPOINT')
+            # Attach INGRESS NF_FG to USER_INGRESS ENDPOINT
+            logging.debug('Attach INGRESS NF_FG to USER_INGRESS ENDPOINT')
             # logging.info(ingress_nf_fg.getJSON())
             manager.attachIngressNF_FG(ingress_nf_fg)
 
