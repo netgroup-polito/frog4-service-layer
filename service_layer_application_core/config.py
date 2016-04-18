@@ -48,6 +48,8 @@ class Configuration(object):
         self._REMOTE_INGRESS_TYPE = config.get('user_connection', 'remote_ingress_type')
         self._EGRESS_PORT = config.get('user_connection', 'egress_port')
         self._EGRESS_TYPE = config.get('user_connection', 'egress_type')
+        self._REMOTE_EGRESS_PORT = config.get('user_connection', 'remote_egress_port')
+        self._REMOTE_EGRESS_TYPE = config.get('user_connection', 'remote_egress_type')
 
         self._SWITCH_NAME = [e.strip() for e in config.get('switch', 'switch_l2_name').split(',')]
         self._CONTROL_SWITCH_NAME = config.get('switch', 'switch_l2_control_name')
@@ -77,6 +79,7 @@ class Configuration(object):
         self._SG_USER_EGRESS = config.get('endpoint_type', 'sg_user_egress')
         self._USER_INGRESS = config.get('endpoint_type', 'user_ingress')
         self._REMOTE_USER_INGRESS = config.get('endpoint_type', 'remote_user_ingress')
+        self._REMOTE_GRAPH_EGRESS = config.get('endpoint_type', 'remote_graph_egress')
         self._USER_EGRESS = config.get('endpoint_type', 'user_egress')
         self._ISP_INGRESS = config.get('endpoint_type', 'isp_ingress')
         self._ISP_EGRESS = config.get('endpoint_type', 'isp_egress')
@@ -126,6 +129,10 @@ class Configuration(object):
     @property
     def REMOTE_USER_INGRESS(self):
         return self._REMOTE_USER_INGRESS
+
+    @property
+    def REMOTE_GRAPH_EGRESS(self):
+        return self._REMOTE_GRAPH_EGRESS
 
     @property
     def USER_EGRESS(self):
@@ -198,6 +205,14 @@ class Configuration(object):
     @property
     def REMOTE_INGRESS_PORT(self):
         return self._REMOTE_INGRESS_PORT
+
+    @property
+    def REMOTE_EGRESS_PORT(self):
+        return self._REMOTE_EGRESS_PORT
+
+    @property
+    def REMOTE_EGRESS_TYPE(self):
+        return self._REMOTE_EGRESS_TYPE
 
     @property
     def ISP_USERNAME(self):
