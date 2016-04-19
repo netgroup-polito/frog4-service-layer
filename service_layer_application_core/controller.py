@@ -10,6 +10,7 @@ import logging
 import uuid
 
 from service_layer_application_core.config import Configuration
+from service_layer_application_core.sql.graph import Graph
 from service_layer_application_core.sql.session import Session
 from service_layer_application_core.sql.user import User
 from nffg_library.nffg import NF_FG
@@ -168,6 +169,10 @@ class ServiceLayerController:
             session_id = session.id
             Session().updateStatus(session_id, 'updating')
 
+            # clone the nffg into a service_graph before to start lowering, so we can add it into db if success
+            sl_nffg = NF_FG()
+            sl_nffg.parseDict(nffg.getDict(domain=True))
+
             # Manage new device
             if Session().checkDeviceSession(self.user_data.getUserID(), mac_address) is True:
                 '''
@@ -186,6 +191,7 @@ class ServiceLayerController:
             if DEBUG_MODE is False:
                 try:
                     self.orchestrator.put(nffg)
+                    Graph.set_service_graph(Graph.get_last_graph(session_id).id, sl_nffg)
                 except Exception as err:
                     Session().set_error(session_id)
                     raise err
@@ -202,6 +208,10 @@ class ServiceLayerController:
             session_id = uuid.uuid4().hex
             Session().inizializeSession(session_id, self.user_data.getUserID(), nffg.id, nffg.name)
 
+            # clone the nffg into a service_graph before to start lowering, so we can add it into db if success
+            sl_nffg = NF_FG()
+            sl_nffg.parseDict(nffg.getDict(domain=True))
+
             # Manage profile
             logging.debug("User service graph: "+nffg.getJSON(domain=True))
             self.prepareProfile(mac_address, nffg)
@@ -212,11 +222,14 @@ class ServiceLayerController:
             if DEBUG_MODE is False:
                 try:
                     self.orchestrator.put(nffg)
+                    # add the service graph to db
+                    Graph().add_graph(sl_nffg, session_id)
                     logging.debug("Profile instantiated for user '"+self.user_data.username+"'")
                     print("Profile instantiated for user '"+self.user_data.username+"'")
                 except Exception as err:
                     logging.exception(err)
                     Session().set_error(session_id)
+                    Graph.delete_graph(session_id)
                     logging.debug("Failed to instantiated profile for user '"+self.user_data.username+"'")
                     print("Failed to instantiated profile for user '"+self.user_data.username+"'")
                     raise err

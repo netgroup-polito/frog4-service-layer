@@ -176,6 +176,38 @@ CREATE TABLE IF NOT EXISTS `domain_neighbor` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `end_point`
+--
+
+CREATE TABLE IF NOT EXISTS `end_point` (
+  `id` int(64) NOT NULL,
+  `name` varchar(64) COLLATE utf8_unicode_ci NOT NULL,
+  `type` varchar(64) COLLATE utf8_unicode_ci NOT NULL,
+  `domain_name` varchar(64) COLLATE utf8_unicode_ci NOT NULL,
+  `interface` varchar(64) COLLATE utf8_unicode_ci,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `graph`
+--
+
+CREATE TABLE IF NOT EXISTS `graph` (
+  `id` int(64) NOT NULL,
+  `session_id` varchar(64) NOT NULL,
+  `domain_id` int(11) DEFAULT NULL,
+  `partial` tinyint(4) DEFAULT NULL,
+  `service_graph` text NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `service_graph_id` (`session_id`,`domain_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
 --
 -- Dumping data for table `user`
 --
@@ -188,19 +220,19 @@ REPLACE INTO `user` (`id`, `name`, `password`, `tenant_id`, `service_graph`) VAL
 -- Dumping data for table `node`
 --
 
---REPLACE INTO `node` (`id`, `name`, `domain_id`) VALUES
---('0', 'node0', '130.192.225.105'),
---('1', 'node1', '130.192.225.193'),
---('2', 'node2', '10.0.0.3'),
---('3', 'node3', '10.0.0.4'),
---('4', 'node4', '10.0.0.5');
+-- REPLACE INTO `node` (`id`, `name`, `domain_id`) VALUES
+-- ('0', 'node0', '130.192.225.105'),
+-- ('1', 'node1', '130.192.225.193'),
+-- ('2', 'node2', '10.0.0.3'),
+-- ('3', 'node3', '10.0.0.4'),
+-- ('4', 'node4', '10.0.0.5');
 
 --
 -- Dumping data for table `user_location`
 --
 
---REPLACE INTO `user_location` (`user_id`, `node_id`) VALUES
---('0', '0');
+-- REPLACE INTO `user_location` (`user_id`, `node_id`) VALUES
+-- ('0', '0');
 
 --
 -- Dumping data for table `tenant`
