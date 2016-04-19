@@ -5,10 +5,11 @@ Created on Feb 15, 2015
 """
 import logging, json
 
-from service_layer_application_core.exception import GreIdNotFound
+from service_layer_application_core.exception import GreIdNotFound, EndPointIdNotFound
 from service_layer_application_core.nffg_manager import NFFG_Manager
 from service_layer_application_core.config import Configuration
 from service_layer_application_core.sql.domains_info import DomainInformation
+from service_layer_application_core.sql.end_point import EndPointDB
 from service_layer_application_core.sql.node import Node
 
 ISP_INGRESS = Configuration().ISP_INGRESS
@@ -16,6 +17,7 @@ ISP_EGRESS = Configuration().ISP_EGRESS
 CONTROL_INGRESS = Configuration().CONTROL_INGRESS
 USER_INGRESS = Configuration().USER_INGRESS
 REMOTE_USER_INGRESS = Configuration().REMOTE_USER_INGRESS
+REMOTE_GRAPH_EGRESS = Configuration().REMOTE_GRAPH_EGRESS
 CONTROL_EGRESS = Configuration().CONTROL_EGRESS
 
 INGRESS_PORT = Configuration().INGRESS_PORT
@@ -24,6 +26,8 @@ EGRESS_PORT = Configuration().EGRESS_PORT
 EGRESS_TYPE = Configuration().EGRESS_TYPE
 REMOTE_INGRESS_TYPE = Configuration().REMOTE_INGRESS_TYPE
 REMOTE_INGRESS_PORT = Configuration().REMOTE_INGRESS_PORT
+REMOTE_EGRESS_TYPE = Configuration().REMOTE_EGRESS_TYPE
+REMOTE_EGRESS_PORT = Configuration().REMOTE_EGRESS_PORT
 
 ISP = Configuration().ISP
 
@@ -59,16 +63,14 @@ class Endpoint(object):
                 if user_id is not None:
                     endpoint.node = Node().getNodeDomainID(Node().getUserLocation(user_id))
             elif endpoint.name == REMOTE_USER_INGRESS:
-                endpoint.type = REMOTE_INGRESS_TYPE
-                endpoint.interface = REMOTE_INGRESS_PORT
-                gre_model = DomainInformation.get_domain_gre(endpoint.id)
-                if gre_model is None:
-                    raise GreIdNotFound(
-                        "The end point '" + endpoint.id + "' of type gre have not an entry prepared in the database"
+                end_point_model = EndPointDB.get_end_point(endpoint.db_id)
+                if end_point_model is None:
+                    raise EndPointIdNotFound(
+                        "The end point '" + endpoint.id + "' have not an entry prepared in the database."
                     )
-                endpoint.local_ip = gre_model.local_ip
-                endpoint.remote_ip = gre_model.remote_ip
-                endpoint.gre_key = gre_model.gre_key
+                endpoint.domain = end_point_model.domain_name
+                endpoint.type = end_point_model.type
+                endpoint.interface = end_point_model.interface
                 if user_id is not None:
                     endpoint.node = Node().getNodeDomainID(Node().getUserLocation(user_id))
             else:

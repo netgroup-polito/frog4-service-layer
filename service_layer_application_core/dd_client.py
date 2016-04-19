@@ -59,7 +59,7 @@ class DDClient(ClientSafe):
             # add this new domain as end-point in the instantiated authentication graph
             if auth_graph_manager.is_instantiated():
                 # TODO this should be done only if the new domain have user ports and only for one external interface
-                auth_graph_manager.add_remote_end_point(di)
+                auth_graph_manager.add_remote_end_points(di)
             else:
                 # TODO if no authentication graph, we should buffer all end points for later
                 pass

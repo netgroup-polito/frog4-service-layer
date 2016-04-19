@@ -43,6 +43,15 @@ class DomainInfo(object):
             if interface.node == node and interface.name == name:
                 return interface
 
+    def getInternetInterfaceIfAny(self):
+        """
+
+        :return:
+        :rtype: Interface
+        """
+        for interface in self.interfaces:
+            if interface.getNeighborByDomainName('internet') is not None:
+                return interface
 
 class Interface(object):
     # Subinterfaces are ignored
@@ -109,6 +118,11 @@ class Interface(object):
 
     def addVlan(self, vlan):
         self.vlans_free.append(vlan)
+
+    def getNeighborByDomainName(self, domain_name):
+        for neighbor in self.neighbors:
+            if neighbor.domain_name == domain_name:
+                return neighbor
 
 
 class Neighbor(object):

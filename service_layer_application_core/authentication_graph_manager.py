@@ -3,6 +3,7 @@ Created on Apr 14, 2016
 
 @author: gabrielecastellano
 """
+import json
 import logging
 
 from service_layer_application_core.common.user_session import UserSession
@@ -10,7 +11,9 @@ from service_layer_application_core.config import Configuration
 from service_layer_application_core.controller import ServiceLayerController
 from service_layer_application_core.nffg_manager import NFFG_Manager
 from service_layer_application_core.orchestrator_rest import GlobalOrchestrator
-from service_layer_application_core.sql.domains_info import DomainInformation
+from service_layer_application_core.sql.end_point import EndPointDB
+from service_layer_application_core.sql.graph import Graph
+from service_layer_application_core.sql.session import Session
 from service_layer_application_core.sql.user import User
 from service_layer_application_core.sql.domain import Domain
 from service_layer_application_core.user_authentication import UserData
@@ -111,101 +114,78 @@ class AuthGraphManager:
             logging.error("Failed to take the currently instantiated authentication graph from orchestrator.")
             logging.exception(err)
 
-    def add_remote_end_point(self, remote_domain_info):
+    def add_remote_end_points(self, remote_domain_info):
         """
         Add a new remote end-point to the currently instantiated authentication graph,
-        and configure the new domain with a graph with a specular end-point
+        and ask for an update of this graph
         :param remote_domain_info: the new domain to attach
         :return:
         :type remote_domain_info: DomainInfo
         """
 
-        # get current instance of nffg
+        # get current instance of authentication service-graph
+        session_id = Session().get_active_user_session(self.admin_id).id
         current_domain_name = Domain().get_domain(self.current_domain_id).name
-        nffg = self.get_current_instance()
+        nffg = NF_FG()
+        nffg.parseDict(json.loads(Graph.get_last_graph(session_id).service_graph))
         if nffg is not None:
             if remote_domain_info.name != current_domain_name:
-                logging.debug("Adding end point to auth-graph for the new domain: '" + remote_domain_info.name + "'")
+
+                # get the outer interface of the new domain (maybe I don't need it really)
+                new_domain_internet_interface = remote_domain_info.getInternetInterfaceIfAny()
+                if new_domain_internet_interface is None:
+                    logging.error("New domain does not have an internet interface, it will not be added to auth-graph")
+                    return
+
+                logging.debug("Adding end points to auth-graph for the new domain: '" + remote_domain_info.name + "'")
+
                 for interface in remote_domain_info.interfaces:
-                    # TODO should do this only if it's the internet interface
+                    # TODO this check will be 'interface.type == "access"'
+                    if len(interface.neighbors) == 0:
 
-                    # get the ip assigned to the interface of the 'auth-graph-domain' where
-                    #  remote end-points should be attached
-                    current_domain_ingress_ip = DomainInformation()\
-                        .get_node_by_interface(self.current_domain_id, Configuration().REMOTE_INGRESS_PORT)
+                        # prepare a db entry for this end-point to allow the future characterization
+                        end_point_db_id = EndPointDB.add_end_point(
+                            name=Configuration().REMOTE_USER_INGRESS,
+                            domain=remote_domain_info.name,
+                            _type='interface',
+                            interface=interface.name
+                        )
+                        # create a new end-point
+                        end_point = EndPoint(
+                            _id=nffg.getNextAvailableEndPointId(),
+                            name=Configuration().REMOTE_USER_INGRESS,
+                            db_id=end_point_db_id
+                        )
+                        nffg.addEndPoint(end_point)
+                        logging.debug("Endpoint '" + end_point.id + "' created")
 
-                    # add this remote connection in db (currently is supported a gre-endpoint)
-                    current_domain_interface = DomainInformation.get_domain_info_by_interface(
-                        self.current_domain_id,
-                        Configuration().REMOTE_INGRESS_PORT
-                    )
-                    gre_db_id = DomainInformation.add_domain_gre(
-                        domain_name=current_domain_name,
-                        domain_info_id=current_domain_interface.id,
-                        local_ip=current_domain_ingress_ip,
-                        remote_ip=interface.node,
-                        gre_key=remote_domain_info.domain_id
-                    )
-                    # create a new end-point
-                    end_point = EndPoint(
-                        _id=nffg.getNextAvailableEndPointId(),
-                        name=Configuration().REMOTE_USER_INGRESS,
-                        db_id=gre_db_id
-                    )
-                    nffg.addEndPoint(end_point)
-                    logging.debug("Endpoint '" + end_point.id + "' created")
+                        # add a new port to the switch VNF
+                        switch_vnf = nffg.getVNF("00000001")
+                        port_label = switch_vnf.ports[0].id.split(":")[0]
+                        new_relative_id = int(switch_vnf.getHigherReletiveIDForPortLabel(port_label)) + 1
+                        new_port = Port(port_label + ":" + str(new_relative_id))
+                        switch_vnf.addPort(new_port)
+                        logging.debug("New port '" + new_port.id + "' inserted into switch VNF")
+                        logging.debug("New VNF: '" + str(switch_vnf.getDict()))
 
-                    # add a new port to the switch VNF
-                    switch_vnf = nffg.getVNF("00000001")
-                    port_label = switch_vnf.ports[0].id.split(":")[0]
-                    new_relative_id = int(switch_vnf.getHigherReletiveIDForPortLabel(port_label)) + 1
-                    port = Port(port_label + ":" + str(new_relative_id))
-                    switch_vnf.addPort(port)
-                    logging.debug("New port '" + port.id + "' inserted into switch VNF")
-                    logging.debug("New VNF: '" + str(switch_vnf.getDict()))
-
-                    # insert two flow rules to connect the end point to the switch VNF
-                    logging.debug("Creating flow rules for endpoint '" + end_point.id + "'...")
-                    to_user_flow_rule = FlowRule(
-                        _id=nffg.getNextAvailableFlowRuleId(),
-                        priority=1,
-                        match=Match(port_in='vnf:'+switch_vnf.id+':'+port.id)
-                    )
-                    to_user_flow_rule.actions.append(Action(output='endpoint:'+end_point.id))
-                    nffg.addFlowRule(to_user_flow_rule)
-                    from_user_flow_rule = FlowRule(
-                        _id=nffg.getNextAvailableFlowRuleId(),
-                        priority=1,
-                        match=Match(port_in='endpoint:'+end_point.id)
-                    )
-                    from_user_flow_rule.actions.append(Action(output='vnf:'+switch_vnf.id+':'+port.id))
-                    nffg.addFlowRule(from_user_flow_rule)
-                    logging.debug("Appended flow rule: " + str(to_user_flow_rule.getDict()))
-                    logging.debug("Appended flow rule: " + str(from_user_flow_rule.getDict()))
-
-                    # now instantiate a graph with simply a remote end-point into the new domain
-                    logging.debug("Preparing a new graph for the domain '" + remote_domain_info.name + "'")
-                    new_domain_nffg = NFFG_Manager.getNF_FGFromFile('remote_device_graph.json')
-                    # add this remote connection in db (currently is supported a gre-endpoint)
-                    remote_domain_interface = DomainInformation.get_domain_info_by_interface(
-                        remote_domain_info.domain_id,
-                        interface.name
-                    )
-                    gre_db_id = DomainInformation.add_domain_gre(
-                        domain_name=remote_domain_info.name,
-                        domain_info_id=remote_domain_interface.id,
-                        local_ip=interface.node,
-                        remote_ip=current_domain_ingress_ip,
-                        gre_key=remote_domain_info.domain_id
-                    )
-                    # set the db_id in the end-point to allow the future characterization
-                    new_domain_nffg.getEndPointsFromName(Configuration().REMOTE_GRAPH_EGRESS)[0].db_id = gre_db_id
-                    # set an id for this graph
-                    new_domain_nffg.id += remote_domain_info.name
-                    # send the request to the controller
-                    self.instantiate_remote_graph(remote_domain_info.name, new_domain_nffg)
-                    break
-
+                        # insert two flow rules to connect the end point to the switch VNF
+                        logging.debug("Creating flow rules for endpoint '" + end_point.id + "'...")
+                        to_user_flow_rule = FlowRule(
+                            _id=nffg.getNextAvailableFlowRuleId(),
+                            priority=1,
+                            match=Match(port_in='vnf:'+switch_vnf.id+':'+new_port.id)
+                        )
+                        to_user_flow_rule.actions.append(Action(output='endpoint:'+end_point.id))
+                        nffg.addFlowRule(to_user_flow_rule)
+                        logging.debug("Appended flow rule: " + str(to_user_flow_rule.getDict()))
+                        from_user_flow_rule = FlowRule(
+                            _id=nffg.getNextAvailableFlowRuleId(),
+                            priority=1,
+                            match=Match(port_in='endpoint:'+end_point.id)
+                        )
+                        from_user_flow_rule.actions.append(Action(output='vnf:'+switch_vnf.id+':'+new_port.id))
+                        nffg.addFlowRule(from_user_flow_rule)
+                        logging.debug("Appended flow rule: " + str(from_user_flow_rule.getDict()))
                 # update the authentication graph
                 self.update(nffg)
             else:
