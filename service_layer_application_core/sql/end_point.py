@@ -8,7 +8,6 @@ from sqlalchemy import Column, VARCHAR, Integer
 from sqlalchemy.ext.declarative import declarative_base
 from service_layer_application_core.sql.sql_server import get_session
 from service_layer_application_core.config import Configuration
-from nffg_library.nffg import EndPoint
 
 Base = declarative_base()
 sql_server = Configuration().CONNECTION
@@ -58,3 +57,24 @@ class EndPointDB(object):
         """
         session = get_session()
         return session.query(EndPointModel).filter_by(id=end_point_id).one()
+
+    @staticmethod
+    def get_end_point_by_domain_interface(domain_name, interface):
+        """
+
+        :param domain_name:
+        :param interface:
+        :return:
+        :rtype: EndPointModel
+        """
+        session = get_session()
+        return session.query(EndPointModel)\
+            .filter_by(domain_name=domain_name)\
+            .filter_by(interface=interface)\
+            .one()
+
+    @staticmethod
+    def delete_end_point(db_id):
+        session = get_session()
+        with session.begin():
+            session.query(EndPointModel).filter_by(id=db_id).delete()
