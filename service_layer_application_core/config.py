@@ -12,6 +12,7 @@ import os
 class Configuration(object):
     _instance = None
     _AUTH_SERVER = None
+    config_file = 'default-config.ini'
 
     def __new__(cls, *args, **kwargs):
 
@@ -25,10 +26,11 @@ class Configuration(object):
             self.inizialize()
 
     def inizialize(self):
+
         config = configparser.RawConfigParser()
         base_folder = \
         os.path.realpath(os.path.abspath(os.path.split(inspect.getfile(inspect.currentframe()))[0])).rpartition('/')[0]
-        config.read(base_folder + '/configuration/service_layer.conf')
+        config.read(base_folder + '/config/' + self.config_file)
         self._LOG_FILE = config.get('log', 'log_file')
         self._VERBOSE = config.getboolean('log', 'verbose')
         self._DEBUG = config.getboolean('log', 'debug')

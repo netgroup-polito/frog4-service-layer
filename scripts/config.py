@@ -3,7 +3,9 @@ Created on Oct 1, 2014
 
 @author: fabiomignini
 '''
-import ConfigParser, os, inspect
+import configparser
+import inspect
+import os
 
 
 class Configuration(object):
@@ -24,12 +26,21 @@ class Configuration(object):
             self.inizialize()
     
     def inizialize(self): 
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         base_folder = os.path.realpath(os.path.abspath(os.path.split(inspect.getfile( inspect.currentframe() ))[0])).rpartition('/')[0]
-        config.read(base_folder+'/Configuration/service_layer.conf')
-        self._AUTH_SERVER = config.get('authentication', 'server')
-        
-    @property
-    def AUTH_SERVER(self):
-        return self._AUTH_SERVER
+        config.read(base_folder+'/config/demo_frog4.ini')
+        self._DD_CUSTOMER = config.get('doubledecker', 'dd_customer')
+        self._BROKER_ADDRESS = config.get('doubledecker', 'broker_address')
+        self._DD_KEYFILE = config.get('doubledecker', 'dd_keyfile')
 
+    @property
+    def BROKER_ADDRESS(self):
+        return self._BROKER_ADDRESS
+
+    @property
+    def DD_CUSTOMER(self):
+        return self._DD_CUSTOMER
+
+    @property
+    def DD_KEYFILE(self):
+        return self._DD_KEYFILE
