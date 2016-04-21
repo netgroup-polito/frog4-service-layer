@@ -72,10 +72,6 @@
     "end-points": [
       {
         "id": "00000001",
-        "name": "INGRESS"
-      },
-      {
-        "id": "00000002",
         "name": "EGRESS"
       }
     ],
@@ -161,7 +157,7 @@
           },
           "actions": [
             {
-              "output_to_port": "vnf:00000005:user:0"
+              "output_to_port": "vnf:00000005:User:0"
             }
           ]
         },
@@ -169,7 +165,7 @@
           "id": "00000008",
           "priority": 1,
           "match": {
-            "port_in": "vnf:00000005:user:0"
+            "port_in": "vnf:00000005:User:0"
           },
           "actions": [
             {
@@ -181,31 +177,7 @@
           "id": "00000009",
           "priority": 1,
           "match": {
-            "port_in": "vnf:00000005:internet:1"
-          },
-          "actions": [
-            {
-              "output_to_port": "endpoint:00000002"
-            }
-          ]
-        },
-	    {
-          "id": "00000010",
-          "priority": 1,
-          "match": {
-            "port_in": "endpoint:00000002"
-          },
-          "actions": [
-            {
-              "output_to_port": "vnf:00000005:internet:1"
-            }
-          ]
-        },
-        {
-          "id": "00000011",
-          "priority": 1,
-          "match": {
-            "port_in": "vnf:00000001:L2Port:4"
+            "port_in": "vnf:00000005:WAN:1"
           },
           "actions": [
             {
@@ -214,14 +186,14 @@
           ]
         },
 	    {
-          "id": "00000012",
+          "id": "00000010",
           "priority": 1,
           "match": {
             "port_in": "endpoint:00000001"
           },
           "actions": [
             {
-              "output_to_port": "vnf:00000001:L2Port:4"
+              "output_to_port": "vnf:00000005:WAN:1"
             }
           ]
         }
