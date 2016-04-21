@@ -5,6 +5,9 @@ Created on Jun 20, 2015
 @author: stefanopetrangeli
 @author: gabrielecastellano
 """
+import logging
+import json
+
 from sqlalchemy import Column, VARCHAR, Boolean, Integer, Text
 from sqlalchemy.ext.declarative import declarative_base
 from service_layer_application_core.sql.sql_server import get_session
@@ -12,7 +15,6 @@ from sqlalchemy.sql import func
 
 from service_layer_application_core.config import Configuration
 from service_layer_application_core.sql.session import Session
-import logging
 
 Base = declarative_base()
 sql_server = Configuration().CONNECTION
@@ -38,10 +40,11 @@ class Graph(object):
     def add_graph(self, nffg, session_id, partial=False):
         session = get_session()  
         with session.begin():
-            self.id_generator(nffg, session_id)
-            service_graph = str(nffg.getDict(domain=True))
-            graph_ref = GraphModel(id=nffg.db_id, session_id=session_id, partial=partial, service_graph=service_graph)
+            _id = self.id_generator(session_id)
+            service_graph = json.dumps(nffg.getDict(extended=True, domain=True))
+            graph_ref = GraphModel(id=_id, session_id=session_id, partial=partial, service_graph=service_graph)
             session.add(graph_ref)
+        return _id
 
     def delete_session(self, session_id):
         session = get_session()
@@ -59,7 +62,7 @@ class Graph(object):
     def set_service_graph(graph_id, nffg):
         session = get_session()
         with session.begin():
-            service_graph = str(nffg.getDict(domain=True))
+            service_graph = json.dumps(nffg.getDict(extended=True, domain=True))
             session.query(GraphModel).filter_by(id=graph_id).update({"service_graph": service_graph})
     
     @staticmethod
@@ -98,23 +101,24 @@ class Graph(object):
     def set_domain_id(graph_id, domain_id):
         session = get_session()
         with session.begin():
-            logging.debug(session.query(GraphModel).filter_by(id=graph_id).update({"domain_id": domain_id}))
+            session.query(GraphModel).filter_by(id=graph_id).update({"domain_id": domain_id})
             
-    def id_generator(self, nffg, session_id, update=False, graph_id=None):
+    def id_generator(self, session_id, update=False, graph_id=None):
         graph_base_id = self._get_higher_graph_id()
         if graph_base_id is not None:
             self.graph_id = int(graph_base_id) + 1
         else:
             self.graph_id = 0
         if not update:
-            nffg.db_id = self.graph_id
+            db_id = self.graph_id
         else:
             session = get_session()  
             if graph_id is None:
                 graphs_ref = session.query(GraphModel).filter_by(session_id=session_id).all()
-                nffg.db_id = graphs_ref[0].id
+                db_id = graphs_ref[0].id
             else:
-                nffg.db_id = graph_id            
+                db_id = graph_id
+        return db_id
     """
     def _getGraph(self, graph_id):
         session = get_session()  

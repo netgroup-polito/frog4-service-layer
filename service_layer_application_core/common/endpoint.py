@@ -48,8 +48,15 @@ class Endpoint(object):
         for endpoint in self.nffg.end_points:
             # Connects directly vnf with endpoint_switch, that means get rid of egress_endpoint           
             if endpoint.name == ISP_EGRESS:
-                endpoint.type = EGRESS_TYPE
-                endpoint.interface = EGRESS_PORT
+                end_point_model = EndPointDB.get_end_point(endpoint.db_id)
+                # if end_point_model is None:
+                #     endpoint.type = EGRESS_TYPE
+                #     endpoint.interface = EGRESS_PORT
+                if end_point_model.domain_name is not None:
+                    endpoint.domain = end_point_model.domain_name
+                endpoint.type = end_point_model.type
+                endpoint.interface = end_point_model.interface
+
                 if user_id is not None:
                     endpoint.node = Node().getNodeDomainID(Node().getUserLocation(user_id))
             elif endpoint.name == CONTROL_EGRESS and ISP is False:
@@ -57,12 +64,12 @@ class Endpoint(object):
                 endpoint.interface = EGRESS_PORT
                 if user_id is not None:
                     endpoint.node = Node().getNodeDomainID(Node().getUserLocation(user_id))
-            elif endpoint.name == USER_INGRESS:
-                endpoint.type = INGRESS_TYPE
-                endpoint.interface = INGRESS_PORT
-                if user_id is not None:
-                    endpoint.node = Node().getNodeDomainID(Node().getUserLocation(user_id))
-            elif endpoint.name == REMOTE_USER_INGRESS:
+            # elif endpoint.name == USER_INGRESS:
+            #     endpoint.type = INGRESS_TYPE
+            #     endpoint.interface = INGRESS_PORT
+            #     if user_id is not None:
+            #         endpoint.node = Node().getNodeDomainID(Node().getUserLocation(user_id))
+            elif endpoint.name == USER_INGRESS or endpoint.name == REMOTE_USER_INGRESS:
                 end_point_model = EndPointDB.get_end_point(endpoint.db_id)
                 if end_point_model is None:
                     raise EndPointIdNotFound(
@@ -75,4 +82,4 @@ class Endpoint(object):
                     endpoint.node = Node().getNodeDomainID(Node().getUserLocation(user_id))
             else:
                 endpoint.type = 'internal'
-            logging.debug("End-point characterized: " + json.dumps(endpoint.getDict()))
+            logging.debug("End-point characterized: " + json.dumps(endpoint.getDict(domain=True)))

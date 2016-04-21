@@ -10,6 +10,7 @@ import logging
 import uuid
 
 from service_layer_application_core.config import Configuration
+from service_layer_application_core.sql.domain import Domain
 from service_layer_application_core.sql.graph import Graph
 from service_layer_application_core.sql.session import Session
 from service_layer_application_core.sql.user import User
@@ -170,8 +171,10 @@ class ServiceLayerController:
             Session().updateStatus(session_id, 'updating')
 
             # clone the nffg into a service_graph before to start lowering, so we can add it into db if success
+            logging.debug('DEBUG: ' + json.dumps(nffg.getDict(extended=True, domain=True)))
             sl_nffg = NF_FG()
-            sl_nffg.parseDict(nffg.getDict(domain=True))
+            sl_nffg.parseDict(nffg.getDict(extended=True, domain=True))
+            logging.debug('DEBUG: ' + json.dumps(sl_nffg.getDict(extended=True, domain=True)))
 
             # Manage new device
             if Session().checkDeviceSession(self.user_data.getUserID(), mac_address) is True:
@@ -209,8 +212,10 @@ class ServiceLayerController:
             Session().inizializeSession(session_id, self.user_data.getUserID(), nffg.id, nffg.name)
 
             # clone the nffg into a service_graph before to start lowering, so we can add it into db if success
+            logging.debug('DEBUG: ' + json.dumps(nffg.getDict(extended=True, domain=True)))
             sl_nffg = NF_FG()
-            sl_nffg.parseDict(nffg.getDict(domain=True))
+            sl_nffg.parseDict(nffg.getDict(extended=True, domain=True))
+            logging.debug('DEBUG: ' + json.dumps(sl_nffg.getDict(extended=True, domain=True)))
 
             # Manage profile
             logging.debug("User service graph: "+nffg.getJSON(domain=True))
@@ -223,7 +228,9 @@ class ServiceLayerController:
                 try:
                     self.orchestrator.put(nffg)
                     # add the service graph to db
-                    Graph().add_graph(sl_nffg, session_id)
+                    graph_db_id = Graph().add_graph(sl_nffg, session_id)
+                    if domain_name is not None:
+                        Graph.set_domain_id(graph_db_id, Domain.get_domain_from_name(domain_name).id)
                     logging.debug("Profile instantiated for user '"+self.user_data.username+"'")
                     print("Profile instantiated for user '"+self.user_data.username+"'")
                 except Exception as err:

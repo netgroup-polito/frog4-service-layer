@@ -20,9 +20,9 @@ class DDClient(ClientSafe):
         super().__init__(name, dealer_url, customer, keyfile)
         logging.info("Doubledecker Client State: disconnected")
         # request to instantiate the authentication graph on the default domain
-        auth_graph_manager = AuthGraphManager()
-        if not auth_graph_manager.is_instantiated():
-            auth_graph_manager.instantiate_auth_graph()
+        self.auth_graph_manager = AuthGraphManager()
+        if not self.auth_graph_manager.is_instantiated():
+            self.auth_graph_manager.instantiate_auth_graph()
 
     def on_data(self, dst, msg):
         print(dst, " sent", msg)
@@ -52,14 +52,13 @@ class DDClient(ClientSafe):
 
             # if the authentication graph is not still in the network, and this is a compatible domain,
             # we try to instantiate it here:
-            auth_graph_manager = AuthGraphManager()
-            if not auth_graph_manager.is_instantiated():
-                auth_graph_manager.instantiate_auth_graph(di)
+            if not self.auth_graph_manager.is_instantiated():
+                self.auth_graph_manager.instantiate_auth_graph(di)
 
             # add this new domain as end-point in the instantiated authentication graph
-            if auth_graph_manager.is_instantiated():
+            if self.auth_graph_manager.is_instantiated():
                 # TODO this should be done only if the new domain have user ports and only for one external interface
-                auth_graph_manager.add_remote_end_points(di)
+                self.auth_graph_manager.add_access_end_points(di)
             else:
                 # TODO if no authentication graph, we should buffer all end points for later
                 pass
