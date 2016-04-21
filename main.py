@@ -9,12 +9,14 @@ import falcon
 import logging
 import os
 import inspect
+import argparse
 
 from threading import Thread
 from service_layer_application_core.config import Configuration
 from service_layer_application_core.service_layer_application import ServiceLayer
 from service_layer_application_core.dd_client import DDClient
 
+Configuration.config_file = 'demo_frog4.ini'
 conf = Configuration()
 
 # set log level
