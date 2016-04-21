@@ -21,6 +21,7 @@ class DDClient(ClientSafe):
         logging.info("Doubledecker Client State: disconnected")
         # request to instantiate the authentication graph on the default domain
         self.auth_graph_manager = AuthGraphManager()
+        self.detached_domains = []
         if not self.auth_graph_manager.is_instantiated():
             self.auth_graph_manager.instantiate_auth_graph()
 
@@ -57,10 +58,12 @@ class DDClient(ClientSafe):
 
             # add this new domain as end-point in the instantiated authentication graph
             if self.auth_graph_manager.is_instantiated():
-                # TODO this should be done only if the new domain have user ports and only for one external interface
                 self.auth_graph_manager.add_access_end_points(di)
+                while len(self.detached_domains) > 0:
+                    self.auth_graph_manager.add_access_end_points(self.detached_domains[0])
+                    self.detached_domains.pop(0)
             else:
-                # TODO if no authentication graph, we should buffer all end points for later
+                self.detached_domains.append(di)
                 pass
 
         except Exception as ex:
