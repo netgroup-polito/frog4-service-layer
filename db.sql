@@ -137,7 +137,7 @@ CREATE TABLE IF NOT EXISTS `domain` (
 CREATE TABLE IF NOT EXISTS `domain_information` (
   `id` int(64) NOT NULL,
   `domain_id` int(11) NOT NULL,
-  `node` varchar(64) COLLATE utf8_unicode_ci NOT NULL,
+  `node` varchar(64) COLLATE utf8_unicode_ci DEFAULT NULL,
   `interface` varchar(64) COLLATE utf8_unicode_ci NOT NULL,
   `interface_type` varchar(64) COLLATE utf8_unicode_ci DEFAULT NULL,
   `gre` tinyint(1) NOT NULL,
@@ -173,6 +173,7 @@ CREATE TABLE IF NOT EXISTS `domain_neighbor` (
   `neighbor_domain_name` varchar(64) COLLATE utf8_unicode_ci NOT NULL,
   `neighbor_node` varchar(64) COLLATE utf8_unicode_ci DEFAULT NULL,
   `neighbor_interface` varchar(64) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `neighbor_domain_type` varchar(64) COLLATE utf8_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
@@ -186,7 +187,7 @@ CREATE TABLE IF NOT EXISTS `end_point` (
   `id` int(64) NOT NULL,
   `name` varchar(64) COLLATE utf8_unicode_ci NOT NULL,
   `type` varchar(64) COLLATE utf8_unicode_ci NOT NULL,
-  `domain_name` varchar(64) COLLATE utf8_unicode_ci NOT NULL,
+  `domain_name` varchar(64) COLLATE utf8_unicode_ci DEFAULT NULL,
   `interface` varchar(64) COLLATE utf8_unicode_ci,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
