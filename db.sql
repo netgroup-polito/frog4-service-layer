@@ -100,6 +100,8 @@ CREATE TABLE IF NOT EXISTS `vnf_image` (
 CREATE TABLE IF NOT EXISTS `user_device` (
   `session_id` varchar(64) NOT NULL,
   `mac_address` varchar(64) NOT NULL,
+  `endpoint_id` varchar(64) NOT NULL,
+  `endpoint_db_id` varchar(64) NOT NULL,
   PRIMARY KEY (`session_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -215,7 +217,8 @@ CREATE TABLE IF NOT EXISTS `graph` (
 
 REPLACE INTO `user` (`id`, `name`, `password`, `tenant_id`, `service_graph`) VALUES
 ('0', 'admin', 'qwerty', '0', 'authentication_graph.json'),
-('1', 'user1', 'password1', '2', 'client_graph_1.json');
+('1', 'user1', 'password1', '2', 'client_graph_1.json'),
+('2', 'isp', 'isp', '1', 'isp_graph.json');
 
 --
 -- Dumping data for table `node`

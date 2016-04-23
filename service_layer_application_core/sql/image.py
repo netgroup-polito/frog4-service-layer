@@ -35,10 +35,10 @@ class Images(object):
             logging.error(ex)
             raise Exception("No template found for image id: " + str(image_internal_id))
 
-    def getConfiguationModel(self, image_internal_id):
+    def getConfigurationModel(self, image_internal_id):
         session = get_session()
         try:
             return session.query(VNFImage).filter_by(internal_id=image_internal_id).one().configuration_model
         except Exception as ex:
             logging.error(ex)
-            raise Exception("No configuration model found for image id: " + str(image_internal_id))
+            raise Exception("No config model found for image id: " + str(image_internal_id))

@@ -39,9 +39,11 @@ class UserDeviceModel(Base):
     Maps the database table user_device
     '''
     __tablename__ = 'user_device'
-    attributes = ['session_id', 'mac_address']
+    attributes = ['session_id', 'mac_address', 'endpoint_id', 'endpoint_db_id']
     session_id = Column(VARCHAR(64), primary_key=True)
     mac_address = Column(VARCHAR(64), primary_key=True)
+    endpoint_id = Column(VARCHAR(64))
+    endpoint_db_id = Column(VARCHAR(64))
 
 class Session(object):
     def __init__(self):
@@ -198,21 +200,31 @@ class Session(object):
         return true if there is already an active session of the user with this mac
         """
         session = get_session()
-        user_sessions =session.query(SessionModel).filter_by(user_id = user_id).filter_by(ended = None).filter_by(error = None).all()
+        user_sessions = session.query(SessionModel)\
+            .filter_by(user_id=user_id)\
+            .filter_by(ended=None)\
+            .filter_by(error=None).all()
         for user_session in user_sessions:
-            devices = session.query(UserDeviceModel).filter_by(session_id = user_session.id).all()
+            devices = session.query(UserDeviceModel).filter_by(session_id=user_session.id).all()
             for device in devices:
                 if device.mac_address == mac_address:
                     return True
         return False
         
-    def add_mac_address_in_the_session(self, mac_address, session_id):
+    @staticmethod
+    def add_device_in_the_session(mac_address, endpoint_id, endpoint_db_id, session_id):
         session = get_session()
         with session.begin():     
-            user_device_ref = UserDeviceModel(session_id=session_id, mac_address=mac_address)
+            user_device_ref = UserDeviceModel(
+                session_id=session_id,
+                mac_address=mac_address,
+                endpoint_db_id=endpoint_db_id,
+                endpoint_id=endpoint_id
+            )
             session.add(user_device_ref)
     
-    def del_mac_address_in_the_session(self, mac_address, session_id):
+    @staticmethod
+    def del_mac_address_in_the_session(mac_address, session_id):
         session = get_session()
         with session.begin():     
             session.query(UserDeviceModel)\
@@ -220,16 +232,21 @@ class Session(object):
                 .filter_by(mac_address=mac_address)\
                 .delete()
 
-    def get_active_user_devices(self, user_id):
+    @staticmethod
+    def get_active_user_devices(user_id):
         session = get_session()
-        user_sessions = session.query(SessionModel.id).filter_by(user_id = user_id).filter_by(ended = None).filter_by(error = None).all()
-        mac_addresses = []
+        user_sessions = session.query(SessionModel.id)\
+            .filter_by(user_id=user_id)\
+            .filter_by(ended=None)\
+            .filter_by(error=None)\
+            .all()
+        user_devices = []
         for user_session in user_sessions:
-            devices = session.query(UserDeviceModel).filter_by(session_id = user_session.id).all()
+            devices = session.query(UserDeviceModel).filter_by(session_id=user_session.id).all()
             for device in devices:
-                mac_addresses.append(device.mac_address)
-        return mac_addresses
-    
+                user_devices.append(device)
+        return user_devices
+
     def get_active_user_session_from_id(self, session_id):
         session = get_session()
         with session.begin():  
@@ -256,9 +273,9 @@ class Session(object):
             raise SessionNotFound("Session Not Found")
         return session_ref.service_graph_id
     
-    def get_service_graph_info(self,session_id):
+    def get_service_graph_info(self, session_id):
         session = get_session()
-        return session.query(SessionModel.service_graph_id, SessionModel.service_graph_name).filter_by(id = session_id).one()
+        return session.query(SessionModel.service_graph_id, SessionModel.service_graph_name).filter_by(id=session_id).one()
         
         
     def checkEgressNode(self, node, profile):
