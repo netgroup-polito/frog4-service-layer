@@ -8,10 +8,14 @@ from doubledecker.clientSafe import ClientSafe
 import logging
 import json
 
+from service_layer_application_core.config import Configuration
+from service_layer_application_core.isp_graph_manager import ISPGraphManager
 from .domain_info import DomainInfo
 from .sql.domain import Domain
 from .sql.domains_info import DomainInformation
 from .authentication_graph_manager import AuthGraphManager
+
+DEBUG_MODE = Configuration().DEBUG_MODE
 
 
 class DDClient(ClientSafe):
@@ -19,11 +23,19 @@ class DDClient(ClientSafe):
     def __init__(self, name, dealer_url, customer, keyfile):
         super().__init__(name, dealer_url, customer, keyfile)
         logging.info("Doubledecker Client State: disconnected")
-        # request to instantiate the authentication graph on the default domain
+        self.isp_graph_manager = ISPGraphManager()
         self.auth_graph_manager = AuthGraphManager()
+
+        if not DEBUG_MODE:
+            # request to instantiate the isp graph on the default domain
+            if not self.isp_graph_manager.is_instantiated():
+                self.isp_graph_manager.instantiate_isp_graph()
+                if self.auth_graph_manager.is_instantiated():
+                    self.auth_graph_manager.delete_auth_graph()
+            # request to instantiate the authentication graph on the default domain
+            if self.isp_graph_manager.is_instantiated() and not self.auth_graph_manager.is_instantiated():
+                self.auth_graph_manager.instantiate_auth_graph()
         self.detached_domains = []
-        if not self.auth_graph_manager.is_instantiated():
-            self.auth_graph_manager.instantiate_auth_graph()
 
     def on_data(self, dst, msg):
         print(dst, " sent", msg)
@@ -51,9 +63,13 @@ class DDClient(ClientSafe):
             logging.debug("Domain information arrived from %s: %s" % (domain, json.dumps(domain_info)))
             DomainInformation().add_domain_info(di)
 
-            # if the authentication graph is not still in the network, and this is a compatible domain,
-            # we try to instantiate it here:
-            if not self.auth_graph_manager.is_instantiated():
+            # if the isp and authentication graph are not still in the network, and this is a compatible domain,
+            # we try to instantiate them here:
+            if not self.isp_graph_manager.is_instantiated():
+                self.isp_graph_manager.instantiate_isp_graph(di)
+                if self.auth_graph_manager.is_instantiated():
+                    self.auth_graph_manager.delete_auth_graph()
+            if self.isp_graph_manager.is_instantiated() and not self.auth_graph_manager.is_instantiated():
                 self.auth_graph_manager.instantiate_auth_graph(di)
 
             # add this new domain as end-point in the instantiated authentication graph

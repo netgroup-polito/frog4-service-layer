@@ -130,7 +130,11 @@ class Interface(object):
                 return True
         return False
 
-
+    def isLocal(self):
+        for neighbor in self.neighbors:
+            if neighbor.domain_name == 'isp':
+                return True
+        return False
 
 class Neighbor(object):
     def __init__(self, domain_name=None, node=None, interface=None, domain_type=None):
