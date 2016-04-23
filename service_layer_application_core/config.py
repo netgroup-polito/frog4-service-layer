@@ -12,7 +12,7 @@ import os
 class Configuration(object):
     _instance = None
     _AUTH_SERVER = None
-    config_file = 'default-config.ini'
+    config_file = 'demo_frog4.ini'
 
     def __new__(cls, *args, **kwargs):
 
@@ -30,7 +30,7 @@ class Configuration(object):
         config = configparser.RawConfigParser()
         base_folder = \
         os.path.realpath(os.path.abspath(os.path.split(inspect.getfile(inspect.currentframe()))[0])).rpartition('/')[0]
-        config.read(base_folder + '/config/' + self.config_file)
+        config.read(base_folder + '/config/' + Configuration.config_file)
         self._LOG_FILE = config.get('log', 'log_file')
         self._VERBOSE = config.getboolean('log', 'verbose')
         self._DEBUG = config.getboolean('log', 'debug')
@@ -44,6 +44,7 @@ class Configuration(object):
         self._ISP_PASSWORD = config.get('ISP', 'password')
         self._ISP_TENANT = config.get('ISP', 'tenant')
 
+        # ports
         self._INGRESS_PORT = config.get('user_connection', 'ingress_port')
         self._INGRESS_TYPE = config.get('user_connection', 'ingress_type')
         self._REMOTE_INGRESS_PORT = config.get('user_connection', 'remote_ingress_port')
@@ -52,6 +53,8 @@ class Configuration(object):
         self._EGRESS_TYPE = config.get('user_connection', 'egress_type')
         self._REMOTE_EGRESS_PORT = config.get('user_connection', 'remote_egress_port')
         self._REMOTE_EGRESS_TYPE = config.get('user_connection', 'remote_egress_type')
+        self._CP_CONTROL_PORT = config.get('user_connection', 'cp_control_port')
+        self._CP_CONTROL_TYPE = config.get('user_connection', 'cp_control_type')
 
         self._SWITCH_NAME = [e.strip() for e in config.get('switch', 'switch_l2_name').split(',')]
         self._CONTROL_SWITCH_NAME = config.get('switch', 'switch_l2_control_name')
@@ -73,6 +76,8 @@ class Configuration(object):
         self._FLOW_PRIORITY = config.get('user_connection', 'flow_priority')
         self._SWITCH_TEMPLATE = config.get('switch', 'template')
         self._DEFAULT_PRIORITY = config.get('flowrule', "default_priority")
+
+        self._ENRICH_USER_GRAPH = config.get('user_graph_enrichment', 'enrich_user_graph')
         self._INGRESS_GRAPH_FILE = config.get('ingress_nf_fg', "file")
         self._EGRESS_GRAPH_FILE = config.get('engress_nf_fg', "file")
 
@@ -87,6 +92,7 @@ class Configuration(object):
         self._ISP_EGRESS = config.get('endpoint_type', 'isp_egress')
         self._CONTROL_INGRESS = config.get('endpoint_type', 'control_ingress')
         self._CONTROL_EGRESS = config.get('endpoint_type', 'control_egress')
+        self._CP_CONTROL = config.get('endpoint_type', 'cp_control')
 
         # Orchestrator
         self._ISP = config.getboolean('orchestrator', 'isp')
@@ -157,6 +163,10 @@ class Configuration(object):
         return self._CONTROL_EGRESS
 
     @property
+    def CP_CONTROL(self):
+        return self._CP_CONTROL
+
+    @property
     def DD_NAME(self):
         return self._DD_NAME
 
@@ -217,6 +227,14 @@ class Configuration(object):
         return self._REMOTE_EGRESS_TYPE
 
     @property
+    def CP_CONTROL_PORT(self):
+        return self._CP_CONTROL_PORT
+
+    @property
+    def CP_CONTROL_TYPE(self):
+        return self.CP_CONTROL_TYPE
+
+    @property
     def ISP_USERNAME(self):
         return self._ISP_USERNAME
 
@@ -227,6 +245,10 @@ class Configuration(object):
     @property
     def ISP_TENANT(self):
         return self._ISP_TENANT
+
+    @property
+    def ENRICH_USER_GRAPH(self):
+        return self._ENRICH_USER_GRAPH
 
     @property
     def EGRESS_GRAPH_FILE(self):
