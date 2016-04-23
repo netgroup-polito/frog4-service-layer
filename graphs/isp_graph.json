@@ -1,7 +1,7 @@
 {
   "forwarding-graph": {
     "id": "isp-00000001",
-    "name": "ISP_graph",
+    "name": "ISP-Graph",
     "VNFs": [
       {
         "vnf_template": "switch.json",
@@ -51,18 +51,10 @@
     ],
     "end-points": [
       {
-	"type": "interface",
-        "interface": {
-          "interface": "eth0"
-        },
         "id": "00000001",
         "name": "ISP_INGRESS"
       },
       {
-	"type": "interface",
-        "interface": {
-          "interface": "eth1"
-        },
         "id": "00000002",
         "name": "EGRESS"
       }

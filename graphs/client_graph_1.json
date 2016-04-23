@@ -2,7 +2,6 @@
   "forwarding-graph": {
     "id": "polito-00000001",
     "name": "Protected access to the internet",
-    "domain": "domain_example",
     "big-switch": {
       "flow-rules": [
         {
@@ -238,7 +237,7 @@
       },
       {
         "id": "00000002",
-        "name": "EGRESS"
+        "name": "ISP_CONNECTION"
       }
     ]
   }
