@@ -1,5 +1,6 @@
 """
 @author: fabiomignini
+@author: gabrielecastellano
 """
 
 from __future__ import division
@@ -12,8 +13,8 @@ import uuid
 from service_layer_application_core.config import Configuration
 from service_layer_application_core.sql.domain import Domain
 from service_layer_application_core.sql.graph import Graph
-from service_layer_application_core.sql.session import Session
-from service_layer_application_core.sql.user import User
+from service_layer_application_core.sql.session import Session, UserDeviceModel
+from service_layer_application_core.sql.user import User, UserModel
 from nffg_library.nffg import NF_FG
 from service_layer_application_core.nffg_manager import NFFG_Manager
 from service_layer_application_core.common.user_session import UserSession
@@ -38,6 +39,8 @@ INGRESS_TYPE = Configuration().INGRESS_TYPE
 EGRESS_PORT = Configuration().EGRESS_PORT
 EGRESS_TYPE = Configuration().EGRESS_TYPE
 USER_INGRESS = Configuration().USER_INGRESS
+
+ENRICH_USER_GRAPH = Configuration().ENRICH_USER_GRAPH
 
 DEBUG_MODE = Configuration().DEBUG_MODE
 
@@ -137,13 +140,15 @@ class ServiceLayerController:
         # TODO gabriele - if num_sessions == 1 this query will fail because it filters on "ended = NONE"
         Session().updateStatus(session.id, 'deleted')
 
-    def put(self, mac_address=None, domain_name=None, nffg=None):
+    def put(self, mac_address=None, device_endpoint_id=None, domain_name=None, nffg=None):
         """
 
         :param mac_address:
+        :param device_endpoint_id: the id of the end point in the nffg to which the device is attached
         :param domain_name:
         :param nffg:
         :type mac_address: str
+        :type device_endpoint_id: str
         :type domain_name: str
         :type nffg: NF_FG
         :return:
@@ -151,7 +156,6 @@ class ServiceLayerController:
 
         # Get user network function forwarding graph
         if nffg is None:
-            # TODO gabriele - check if getServiceGraph returns null (no graph in db for this user)
             nffg_file = User().getServiceGraph(self.user_data.username)
             if nffg_file is None:
                 raise GraphNotFound("No graph defined for the user '" + self.user_data.username + "'")
@@ -164,17 +168,15 @@ class ServiceLayerController:
         # Check if the user have an active session
         if UserSession(self.user_data.getUserID(), self.user_data).checkSession(nffg.id, self.orchestrator) is True:
             # Existent session for this user
-            logging.debug('The FG for this user is already instantiated, the FG will be update if it has been modified')
+            logging.debug('The FG for this user is already instantiated, the FG will be updated if it has been modified')
 
             session = Session().get_active_user_session_by_nf_fg_id(nffg.id, error_aware=True)
             session_id = session.id
             Session().updateStatus(session_id, 'updating')
 
             # clone the nffg into a service_graph before to start lowering, so we can add it into db if success
-            logging.debug('DEBUG: ' + json.dumps(nffg.getDict(extended=True, domain=True)))
             sl_nffg = NF_FG()
             sl_nffg.parseDict(nffg.getDict(extended=True, domain=True))
-            logging.debug('DEBUG: ' + json.dumps(sl_nffg.getDict(extended=True, domain=True)))
 
             # Manage new device
             if Session().checkDeviceSession(self.user_data.getUserID(), mac_address) is True:
@@ -187,7 +189,7 @@ class ServiceLayerController:
                 '''
                 mac_address = None
 
-            self.addDeviceToNF_FG(mac_address, nffg)
+            self.addDeviceToNF_FG(mac_address, device_endpoint_id, nffg)
 
             # Call orchestrator to update NF-FG
             logging.debug('Call orchestrator sending the following NF-FG: '+nffg.getJSON(domain=True))
@@ -212,10 +214,8 @@ class ServiceLayerController:
             Session().inizializeSession(session_id, self.user_data.getUserID(), nffg.id, nffg.name)
 
             # clone the nffg into a service_graph before to start lowering, so we can add it into db if success
-            logging.debug('DEBUG: ' + json.dumps(nffg.getDict(extended=True, domain=True)))
             sl_nffg = NF_FG()
             sl_nffg.parseDict(nffg.getDict(extended=True, domain=True))
-            logging.debug('DEBUG: ' + json.dumps(sl_nffg.getDict(extended=True, domain=True)))
 
             # Manage profile
             logging.debug("User service graph: "+nffg.getJSON(domain=True))
@@ -240,38 +240,53 @@ class ServiceLayerController:
                     logging.debug("Failed to instantiated profile for user '"+self.user_data.username+"'")
                     print("Failed to instantiated profile for user '"+self.user_data.username+"'")
                     raise err
+            else:
+                # debug mode
+                graph_db_id = Graph().add_graph(sl_nffg, session_id)
+                if domain_name is not None:
+                    Graph.set_domain_id(graph_db_id, Domain.get_domain_from_name(domain_name).id)
+                logging.debug("Profile instantiated for user '"+self.user_data.username+"'")
+                print("Profile instantiated for user '"+self.user_data.username+"'")
 
         # Set mac address in the session
         if mac_address is not None:
-            Session().add_mac_address_in_the_session(mac_address, session_id)
+            Session().add_device_in_the_session(
+                mac_address,
+                device_endpoint_id,
+                nffg.getEndPoint(device_endpoint_id).db_id,
+                session_id
+            )
         Session().updateStatus(session_id, 'complete')
 
-    def addDeviceToNF_FG(self, mac_address, nffg):
+    def addDeviceToNF_FG(self, mac_address, device_endpoint_id, nffg):
         # Get MAC addresses from previous session
         logging.debug('Get MAC addresses from previous session')
-        session_mac_addresses = Session().get_active_user_devices(self.user_data.getUserID())
-        mac_addresses = []
-        if session_mac_addresses is not None:
-            mac_addresses = mac_addresses+session_mac_addresses
+        session_devices = Session().get_active_user_devices(self.user_data.getUserID())
+        user_devices = []
+        if session_devices is not None:
+            user_devices = user_devices + session_devices
         if mac_address is not None:
             logging.debug('new MAC: '+str(mac_address))
-            mac_addresses.append(str(mac_address))
-        logging.debug('MAC addresses: '+str(mac_addresses))
+            user_devices.append(UserDeviceModel(
+                mac_address=mac_address,
+                endpoint_id=device_endpoint_id,
+                endpoint_db_id=nffg.getEndPoint(device_endpoint_id).db_id
+            ))
+        logging.debug('User devices: '+str(user_devices))
 
+        # TODO I think that this fabio's check is wronged so I pass always 'False' for now
         # If the graph is already attached to ISP, we don't have to reconnect it again
-        if ISP is True and (nffg.getEndPointsFromName(CONTROL_EGRESS) or nffg.getEndPointsFromName(CONTROL_EGRESS)):
+        if ISP is True and (nffg.getEndPointsFromName(USER_EGRESS) or nffg.getEndPointsFromName(CONTROL_EGRESS)):
             already_connected = True
         else:
             already_connected = False
 
-        self._prepareProfile(nffg, already_connected=already_connected)
+        self._prepareProfile(nffg, already_connected=False)
 
-        # TODO: I should check the mac address already used in the ingress end point, but then
-        # use the new graph to add all the mac (both those old and that new)
-        if len(mac_addresses) != 0:
+        # add ingress flows for all devices (old and news)
+        if len(user_devices) != 0:
             manager = NFFG_Manager(nffg)
-            # TODO addDevicesFlows doesn't work if there are more than one INGRESS end-points
-            manager.addDevicesFlows(mac_addresses)
+            manager.addDevicesFlows(user_devices)
 
     def _prepareProfile(self, nffg, already_connected=False):
         """
@@ -289,7 +304,7 @@ class ServiceLayerController:
 
         manager = NFFG_Manager(nffg)
 
-        if nffg.name != 'Authentication-Graph':
+        if ENRICH_USER_GRAPH and nffg.name != 'Authentication-Graph' and nffg.name != 'ISP-Graph':
             # Get INGRESS NF-FG
             logging.debug('Getting INGRESS NF-FG')
             ingress_nf_fg = manager.getIngressNF_FG()
@@ -328,7 +343,7 @@ class ServiceLayerController:
         # TODO: if end-point is ... then connect to ISP
         # Create connection to another NF-FG
         # TODO: The following row should be executed only if we want to concatenate ISP to our graphs
-        if ISP is True and nffg.name != 'ISP_graph':
+        if ISP is True and nffg.name != 'ISP-Graph' and not already_connected:
             self.remoteConnection(nffg)
 
         manager.mergeUselessVNFs()
@@ -338,7 +353,7 @@ class ServiceLayerController:
     def prepareProfile(self, mac_address, nffg):
         """
         This function transform the Service Graph passed to a Forwarding Graph.
-        In addition adds the flow rule for the user device.
+        In addiction adds the flow rule for the user device.
 
         :param mac_address: if specified, an ingress flow rule for this device will be added to the nffg
         :param nffg: the graph to prepare
@@ -361,23 +376,35 @@ class ServiceLayerController:
         """
         Connect the nf_fg passed with the ISP graph
         """
-        isp_user_data = UserData(usr=ISP_USERNAME, pwd=ISP_PASSWORD, tnt=ISP_TENANT)
+        # isp_user_data = UserData(usr=ISP_USERNAME, pwd=ISP_PASSWORD, tnt=ISP_TENANT)
+
 
         try:
+            from service_layer_application_core.isp_graph_manager import ISPGraphManager
+            isp_graph_manager = ISPGraphManager()
             control_egress_endpoint = nffg.getEndPointsFromName(CONTROL_EGRESS)
             if control_egress_endpoint:
-                remote_endpoint_id = self.orchestrator.getNFFG(Session().get_profile_id_from_active_user_session(isp_user_data.getUserID()))\
-                                            .getEndPointsFromName(CONTROL_INGRESS)[0].id
-                control_egress_endpoint[0].remote_endpoint_id = Session().get_profile_id_from_active_user_session(isp_user_data.getUserID())\
-                    +':'+remote_endpoint_id
+                # remote_endpoint_id = self.orchestrator.getNFFG(Session().get_profile_id_from_active_user_session(isp_user_data.getUserID()))\
+                #                             .getEndPointsFromName(CONTROL_INGRESS)[0].id
+                # control_egress_endpoint[0].remote_endpoint_id = Session().get_profile_id_from_active_user_session(isp_user_data.getUserID())\
+                #     +':'+remote_endpoint_id
+                isp_nffg = isp_graph_manager.get_current_instance()
+                remote_endpoint_id = isp_nffg.getEndPointsFromName(CONTROL_INGRESS)[0].id
+                control_egress_endpoint[0].remote_endpoint_id = isp_nffg.id + ':' + remote_endpoint_id
             user_egress_endpoint = nffg.getEndPointsFromName(USER_EGRESS)
             if user_egress_endpoint:
-                remote_endpoint_id = self.orchestrator.getNFFG(Session().get_profile_id_from_active_user_session(isp_user_data.getUserID()))\
-                                            .getEndPointsFromName(ISP_INGRESS)[0].id
-                user_egress_endpoint[0].remote_endpoint_id = Session().get_profile_id_from_active_user_session(isp_user_data.getUserID())\
-                    +':'+remote_endpoint_id
+                # remote_endpoint_id = self.orchestrator.getNFFG(Session().get_profile_id_from_active_user_session(isp_user_data.getUserID()))\
+                #                             .getEndPointsFromName(ISP_INGRESS)[0].id
+                # user_egress_endpoint[0].remote_endpoint_id = Session().get_profile_id_from_active_user_session(isp_user_data.getUserID())\
+                #     +':'+remote_endpoint_id
+                isp_nffg = isp_graph_manager.get_current_instance()
+                remote_endpoint_id = isp_nffg.getEndPointsFromName(ISP_INGRESS)[0].id
+                user_egress_endpoint[0].remote_endpoint_id = isp_nffg.id + ':' + remote_endpoint_id
+                user_egress_endpoint[0].domain = Domain.get_domain(isp_graph_manager.current_domain_id).name
         except SessionNotFound:
-            raise ISPNotDeployed("ISP's graph not deployed. By configuration the SLApp try to connect the user service graph to the ISP's graph.")
+            raise ISPNotDeployed("ISP's graph not deployed. By config the SL try to connect the user service graph to the ISP's graph.")
+        except Exception:
+            raise ISPNotDeployed("ISP's graph not deployed. By config the SL try to connect the user service graph to the ISP's graph.")
 
     def deleteRemoteConnections(self):
         raise NotImplementedError()

@@ -10,6 +10,12 @@ import jsonschema
 import logging
 
 from sqlalchemy.orm.exc import NoResultFound
+
+from nffg_library.nffg import EndPoint
+from service_layer_application_core.authentication_graph_manager import AuthGraphManager
+from service_layer_application_core.client_graph_manager import ClientGraphManager
+from service_layer_application_core.nffg_manager import NFFG_Manager
+from service_layer_application_core.sql.user import User
 from service_layer_application_core.user_authentication import UserAuthentication
 from service_layer_application_core.exception import SessionNotFound, UnauthorizedRequest, RequestValidationError, \
     GraphNotFound
@@ -89,14 +95,22 @@ class ServiceLayer(object):
         try:
             user_data = UserAuthentication().authenticateUserFromRESTRequest(request)
             logging.debug("Authenticated user: " + user_data.username)
-            # TODO what should I do if the user is an ISP?
             # Now, it initialize a new controller instance to handle the request
             controller = ServiceLayerController(user_data)
             request_dict = json.loads(request.stream.read().decode())
-            # request_dict = json.load(request.stream, 'utf-8')
             RequestValidator.validate(request_dict)
             if 'device' in request_dict['session']:
-                controller.put(mac_address=request_dict['session']['device']['mac'])
+                # add a new endpoint to the graph for this device if it came from a new port
+                graph_manager = ClientGraphManager(user_data)
+                device_endpoint_id = graph_manager.add_endpoint_from_auth_switch_interface(
+                    request_dict['session']['device']['port']
+                )
+                # send request to controller
+                controller.put(
+                    mac_address=request_dict['session']['device']['mac'],
+                    nffg=graph_manager.nffg,
+                    device_endpoint_id=device_endpoint_id
+                )
             else:
                 controller.put()
             response.status = falcon.HTTP_202

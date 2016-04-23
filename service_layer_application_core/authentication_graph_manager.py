@@ -60,8 +60,10 @@ class AuthGraphManager:
 
             # get the authentication graph
             nffg = NFFG_Manager.getNF_FGFromFile('authentication_graph.json')
-            # prepare the egress end point
-            self._prepare_egress_end_point(nffg, domain_info)
+
+            # prepare the captive portal control end point
+            self._prepare_cp_control_end_point(nffg, domain_info)
+
             # send to controller
             try:
                 user_data = UserData(self.admin_name, self.admin_password, self.admin_tenant)
@@ -72,6 +74,7 @@ class AuthGraphManager:
                 if domain_name is not None:
                     self.current_domain_id = domain_info.domain_id
                 else:
+                    # TODO this is wronged, i should ask to the orchestrator
                     session_id = Session().get_active_user_session(self.admin_id).id
                     self.current_domain_id = Graph().get_last_graph(session_id).domain_id
             except Exception as err:
@@ -93,6 +96,7 @@ class AuthGraphManager:
             controller.put(domain_name=current_domain.name, nffg=nffg)
             logging.info("Authentication graph correctly updated")
         except Exception as err:
+            print("Failed to update the authentication graph.")
             logging.error("Failed to update the authentication graph.")
             logging.exception(err)
 
@@ -114,6 +118,42 @@ class AuthGraphManager:
         user_data = UserData(self.admin_name, self.admin_password, self.admin_tenant)
         orchestrator = GlobalOrchestrator(user_data, self.orchestrator_ip, self.orchestrator_port)
         return UserSession(self.admin_id, None).checkSession(nffg.id, orchestrator)
+
+    @staticmethod
+    def _prepare_cp_control_end_point(nffg, domain_info):
+        """
+        According to informations exported by the domain about its interfaces, prepare a db
+        entry that allow the characterization of the cp_control end_point
+
+        :param domain_info:
+        :type domain_info: DomainInfo
+        :return:
+        """
+        cp_interface_name = None
+
+        if domain_info is not None:
+            domain_name = domain_info.name
+            for interface in domain_info.interfaces:
+                if interface.isLocal():
+                    cp_interface_name = interface.name
+                    break
+        else:
+            domain_name = None
+
+        if cp_interface_name is None:
+            cp_interface_name = Configuration().CP_CONTROL_PORT
+
+        for end_point in nffg.end_points:
+            if end_point.name == Configuration().CP_CONTROL:
+                # prepare an entry for this end point in db
+                end_point_db_id = EndPointDB.add_end_point(
+                    name=end_point.name,
+                    domain=domain_name,
+                    _type='interface',
+                    interface=cp_interface_name
+                )
+                # set the database id in the nffg
+                end_point.db_id = end_point_db_id
 
     # not used
     def get_current_instance(self):
@@ -213,55 +253,6 @@ class AuthGraphManager:
             if new_endpoints:
                 self.update(nffg)
 
-    @staticmethod
-    def _prepare_egress_end_point(nffg, domain_info):
-        """
-        According to informations exported by the domain about its interfaces, prepare a db
-        entry that allow the characterization of the egress end_point
-
-        :param domain_info:
-        :type domain_info: DomainInfo
-        :return:
-        """
-        egress_interface_name = None
-
-        if domain_info is not None:
-            domain_name = domain_info.name
-            for interface in domain_info.interfaces:
-                if interface.isEgress():
-                    egress_interface_name = interface.name
-        else:
-            domain_name = None
-
-        if egress_interface_name is None:
-            egress_interface_name = Configuration().EGRESS_PORT
-
-        for end_point in nffg.end_points:
-            if end_point.name == Configuration().ISP_EGRESS:
-                # prepare an entry for tis end point in db
-                end_point_db_id = EndPointDB.add_end_point(
-                    name=end_point.name,
-                    domain=domain_name,
-                    _type='interface',
-                    interface=egress_interface_name
-                )
-                # set the database id in the nffg
-                end_point.db_id = end_point_db_id
-
-    # not used
-    def instantiate_remote_graph(self, remote_domain_name, new_domain_nffg):
-
-        try:
-            logging.info("Instantiating the remote graph on the new domain")
-            user_data = UserData(self.admin_name, self.admin_password, self.admin_tenant)
-            controller = ServiceLayerController(user_data)
-            controller.put(domain_name=remote_domain_name, nffg=new_domain_nffg)
-            logging.info("Remote graph correctly instantiated on domain '" + remote_domain_name + "'")
-            print("Remote graph correctly instantiated")
-        except Exception as err:
-            logging.error("Failed to instantiate the remote graph.")
-            logging.exception(err)
-
     def remove_remote_end_point(self, remote_domain_name, interface):
 
         logging.debug("removing end point at '" + remote_domain_name + "' : '" + interface + "' from auth-graph")
@@ -283,4 +274,49 @@ class AuthGraphManager:
 
         # update the authentication graph
         self.update(nffg)
+
+    def get_endpoint_from_switch_port(self, switch_vnf_port):
+        """
+        Given a switch virtual port (eg. eth4), this method through the vnf_template_library and nffg_library
+        returns the end point of the authentication graph connected to that port
+        :param switch_vnf_port:
+        :return:the end point of the authentication graph connected to the port passed
+        :rtype: EndPoint
+        """
+
+        # get current instance of authentication service-graph
+        session_id = Session().get_active_user_session(self.admin_id).id
+        # current_domain_name = Domain().get_domain(self.current_domain_id).name
+        nffg = NF_FG()
+        nffg.parseDict(json.loads(Graph.get_last_graph(session_id).service_graph))
+
+        # get the switch vnf from the graph
+        switch_vnf = nffg.getVNF('00000001')
+
+        # get the template of the switch vnf
+        user_data = UserData(self.admin_name, self.admin_password, self.admin_tenant)
+        orchestrator = GlobalOrchestrator(user_data, self.orchestrator_ip, self.orchestrator_port)
+        switch_template = orchestrator.getTemplate(switch_vnf.vnf_template_location)
+
+        # get the port label (eg. L2Port:2) name of the switch vnf from the virtual port (eg. eth4)
+        port_label = switch_template.getVnfPortByVirtualName(switch_vnf_port)
+
+        # get the end point attached to this port
+        end_point = nffg.getEndPointsSendingTrafficToPort(switch_vnf.id, port_label)[0]
+
+        return end_point
+
+    def delete_auth_graph(self):
+
+        user_data = UserData(self.admin_name, self.admin_password, self.admin_tenant)
+        controller = ServiceLayerController(user_data)
+        try:
+            controller.delete(None)
+            logging.info("Authentication graph deleted")
+            print("Authentication graph deleted")
+            self.current_domain_id = None
+        except Exception as err:
+            print("Failed to delete authentication graph.")
+            logging.error("Failed to delete authentication graph.")
+            logging.exception(err)
 
