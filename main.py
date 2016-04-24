@@ -35,7 +35,7 @@ else:
 log_format = '%(asctime)s %(levelname)s %(message)s - %(filename)s:%(lineno)s'
 
 logging.basicConfig(filename=conf.LOG_FILE, level=log_level, format=log_format, datefmt='%m/%d/%Y %I:%M:%S %p')
-logging.debug("Orchestrator Starting")
+logging.debug("Service Layer Starting")
 print("Welcome to the User-oriented Service Layer Application")
 
 # Falcon starts
