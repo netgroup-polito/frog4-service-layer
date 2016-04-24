@@ -200,6 +200,9 @@ class ServiceLayerController:
                 except Exception as err:
                     Session().set_error(session_id)
                     raise err
+            else:
+                # debug mode
+                Graph.set_service_graph(Graph.get_last_graph(session_id).id, sl_nffg)
             if mac_address is not None:
                 logging.info("Added device '"+mac_address+"' of user '"+self.user_data.username+"'")
                 print("Added device '"+mac_address+"' of user '"+self.user_data.username+"'")
@@ -219,7 +222,7 @@ class ServiceLayerController:
 
             # Manage profile
             logging.debug("User service graph: "+nffg.getJSON(domain=True))
-            self.prepareProfile(mac_address, nffg)
+            self.prepareProfile(mac_address, device_endpoint_id, nffg)
 
             # Call orchestrator to instantiate NF-FG
             logging.debug('Calling orchestrator sending NF-FG: '+nffg.getJSON(domain=True))
@@ -350,12 +353,13 @@ class ServiceLayerController:
 
         Endpoint(nffg).characterizeEndpoint(User().getUser(self.user_data.username).id)
 
-    def prepareProfile(self, mac_address, nffg):
+    def prepareProfile(self, mac_address, device_endpoint_id, nffg):
         """
         This function transform the Service Graph passed to a Forwarding Graph.
         In addiction adds the flow rule for the user device.
 
         :param mac_address: if specified, an ingress flow rule for this device will be added to the nffg
+        :param device_endpoint_id:
         :param nffg: the graph to prepare
         :return:
         """
@@ -367,8 +371,12 @@ class ServiceLayerController:
         # Add flow that permits to user device to reach his NF-FG  
         if mac_address is not None:
             logging.debug('Adding device flows for mac address: ' + str(mac_address))
-            # TODO setDeviceFlows doesn't work if there are more than one INGRESS end-points
-            manager.setDeviceFlows(mac_address)
+            user_device = UserDeviceModel(
+                mac_address=mac_address,
+                endpoint_id=device_endpoint_id,
+                endpoint_db_id=nffg.getEndPoint(device_endpoint_id).db_id
+            )
+            manager.setDeviceFlows(user_device)
         else:
             logging.warning("No mac address specified for this request (user '" + self.user_data.username + "')")
 
