@@ -94,7 +94,8 @@ class AuthGraphManager:
             user_data = UserData(self.admin_name, self.admin_password, self.admin_tenant)
             controller = ServiceLayerController(user_data)
             controller.put(domain_name=current_domain.name, nffg=nffg)
-            logging.info("Authentication graph correctly updated")
+            logging.info("Authentication graph updated")
+            print("Authentication graph updated")
         except Exception as err:
             print("Failed to update the authentication graph.")
             logging.error("Failed to update the authentication graph.")
@@ -284,6 +285,7 @@ class AuthGraphManager:
         :rtype: EndPoint
         """
 
+        logging.debug("getting end point from switch virtual port: '" + switch_vnf_port + "'")
         # get current instance of authentication service-graph
         session_id = Session().get_active_user_session(self.admin_id).id
         # current_domain_name = Domain().get_domain(self.current_domain_id).name
@@ -300,10 +302,11 @@ class AuthGraphManager:
 
         # get the port label (eg. L2Port:2) name of the switch vnf from the virtual port (eg. eth4)
         port_label = switch_template.getVnfPortByVirtualName(switch_vnf_port)
+        logging.debug("Port name in nffg is: '" + port_label + "'")
 
         # get the end point attached to this port
         end_point = nffg.getEndPointsSendingTrafficToPort(switch_vnf.id, port_label)[0]
-
+        logging.debug("Attached endpoint is: " + str(end_point.getDict(extended=True, domain=True)))
         return end_point
 
     def delete_auth_graph(self):
