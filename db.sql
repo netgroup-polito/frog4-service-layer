@@ -102,7 +102,7 @@ CREATE TABLE IF NOT EXISTS `user_device` (
   `mac_address` varchar(64) NOT NULL,
   `endpoint_id` varchar(64) NOT NULL,
   `endpoint_db_id` varchar(64) NOT NULL,
-  PRIMARY KEY (`session_id`)
+  PRIMARY KEY (`session_id`, `mac_address`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
