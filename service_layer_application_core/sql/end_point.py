@@ -6,6 +6,8 @@ Created on 19 Apr 2016
 
 from sqlalchemy import Column, VARCHAR, Integer
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm.exc import NoResultFound
+
 from service_layer_application_core.sql.sql_server import get_session
 from service_layer_application_core.config import Configuration
 
@@ -56,7 +58,12 @@ class EndPointDB(object):
         :rtype: EndPointModel
         """
         session = get_session()
-        return session.query(EndPointModel).filter_by(id=end_point_id).one()
+        try:
+            end_point_model = session.query(EndPointModel).filter_by(id=end_point_id).one()
+            return end_point_model
+        except NoResultFound:
+            return None
+
 
     @staticmethod
     def get_end_point_by_domain_interface(domain_name, interface):

@@ -11,7 +11,7 @@ from nffg_library.nffg import EndPoint, Port, FlowRule, Match, Action, NF_FG
 from service_layer_application_core.authentication_graph_manager import AuthGraphManager
 from service_layer_application_core.common.user_session import UserSession
 from service_layer_application_core.config import Configuration
-from service_layer_application_core.exception import GraphNotFound
+from service_layer_application_core.exception import GraphNotFound, SessionNotFound
 from service_layer_application_core.nffg_manager import NFFG_Manager
 from service_layer_application_core.orchestrator_rest import GlobalOrchestrator
 from service_layer_application_core.sql.domain import Domain
@@ -35,12 +35,15 @@ class ClientGraphManager:
         self.user_name = user_data.username
         self.user_password = user_data.password
         self.user_tenant = user_data.tenant
-        self.user_id = User().getUser(self.user_name)
+        self.user_id = User().getUser(self.user_name).id
         self.current_domain_id = None
         # get the user service graph instance from db
         self.nffg = self._get_current_instance()
         if self.nffg is None:
             self.nffg = self._get_user_defined_graph()
+            logging.debug("loaded template user graph from file")
+        else:
+            logging.debug("loaded current instance of user graph from database")
 
     def add_endpoint_from_auth_switch_interface(self, vnf_interface_name):
         """
@@ -143,10 +146,13 @@ class ClientGraphManager:
         :return:
         :rtype: NF_FG
         """
-        session_id = Session().get_active_user_session(self.user_id).id
-        current_domain_name = Domain().get_domain(self.current_domain_id).name
-        nffg = NF_FG()
-        nffg.parseDict(json.loads(Graph.get_last_graph(session_id).service_graph))
+        try:
+            session_id = Session().get_active_user_session(self.user_id).id
+            # current_domain_name = Domain().get_domain(self.current_domain_id).name
+            nffg = NF_FG()
+            nffg.parseDict(json.loads(Graph.get_last_graph(session_id).service_graph))
+        except SessionNotFound:
+            nffg = None
         return nffg
 
     def _get_user_defined_graph(self):
