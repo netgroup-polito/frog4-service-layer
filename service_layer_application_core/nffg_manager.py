@@ -265,17 +265,18 @@ class NFFG_Manager(object):
                         flow_copy = copy.deepcopy(ingress_flow_rule)
                         self.nffg.flow_rules.append(flow_copy)
 
-    def setDeviceFlows(self, mac_address):
+    def setDeviceFlows(self, user_device):
         """
         UserDefnedServiceFunction function that adds in the graph the ingress flow for a user device
+        :param user_device:
+        :type user_device: UserDeviceModel
+        :return:
         """
-        # Find ingress end-point
-        ingress_endpoint = self.nffg.getEndPointsFromName("INGRESS")[0]
         # Find flow rules that connect the end-point
-        ingress_flow_rules = self.nffg.getFlowRulesSendingTrafficFromEndPoint(ingress_endpoint.id)
+        ingress_flow_rules = self.nffg.getFlowRulesSendingTrafficFromEndPoint(user_device.endpoint_id)
         for ingress_flow_rule in ingress_flow_rules:
             ingress_flow_rule.priority = 1000
-            ingress_flow_rule.match.source_mac = mac_address
+            ingress_flow_rule.match.source_mac = user_device.mac_address
             ingress_flow_rule.id = uuid.uuid4().hex
 
     def attachIngressNF_FG(self, ingress_nffg):
