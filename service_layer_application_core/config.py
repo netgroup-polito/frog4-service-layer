@@ -77,7 +77,7 @@ class Configuration(object):
         self._SWITCH_TEMPLATE = config.get('switch', 'template')
         self._DEFAULT_PRIORITY = config.get('flowrule', "default_priority")
 
-        self._ENRICH_USER_GRAPH = config.get('user_graph_enrichment', 'enrich_user_graph')
+        self._ENRICH_USER_GRAPH = config.getboolean('user_graph_enrichment', 'enrich_user_graph')
         self._INGRESS_GRAPH_FILE = config.get('ingress_nf_fg', "file")
         self._EGRESS_GRAPH_FILE = config.get('engress_nf_fg', "file")
 
