@@ -118,7 +118,7 @@ class ClientGraphManager:
         prepare the egress end_point of the client graph to connect it with isp
         :return:
         """
-        # maybe this is yet done by the controller 'remoteConnection' method
+        # maybe this is yet done by "default" switch case in 'characterizeEndPoints'
         pass
 
     def is_instantiated(self):

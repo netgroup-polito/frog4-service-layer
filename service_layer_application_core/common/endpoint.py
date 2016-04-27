@@ -20,6 +20,7 @@ REMOTE_USER_INGRESS = Configuration().REMOTE_USER_INGRESS
 REMOTE_GRAPH_EGRESS = Configuration().REMOTE_GRAPH_EGRESS
 CONTROL_EGRESS = Configuration().CONTROL_EGRESS
 CP_CONTROL = Configuration().CP_CONTROL
+USER_EGRESS = Configuration().USER_EGRESS
 
 INGRESS_PORT = Configuration().INGRESS_PORT
 INGRESS_TYPE = Configuration().INGRESS_TYPE
@@ -91,7 +92,28 @@ class Endpoint(object):
                 endpoint.domain = end_point_model.domain_name
                 endpoint.type = end_point_model.type
                 endpoint.interface = end_point_model.interface
+            elif endpoint.name == ISP_INGRESS:
+                end_point_model = EndPointDB.get_end_point(endpoint.db_id)
+                if end_point_model is None:
+                    raise EndPointIdNotFound(
+                        "The end point '" + endpoint.id + "' have not an entry prepared in the database."
+                    )
+                endpoint.domain = end_point_model.domain_name
+                endpoint.type = end_point_model.type
+                if endpoint.type == 'interface':
+                    endpoint.interface = end_point_model.interface
+                elif endpoint.type == 'internal':
+                    endpoint.internal_group = end_point_model.interface
+            elif endpoint.name == USER_EGRESS:
+                from service_layer_application_core.isp_graph_manager import ISPGraphManager
+                isp_graph_manager = ISPGraphManager()
+                isp_nffg = isp_graph_manager.get_current_instance()
+                isp_end_point_model = EndPointDB.get_end_point(
+                    isp_nffg.getEndPointsFromName(ISP_INGRESS)[0].db_id
+                )
+                endpoint.domain = isp_end_point_model.domain_name
+                endpoint.type = 'internal'
+                endpoint.internal_group = isp_end_point_model.interface
             else:
                 endpoint.type = 'internal'
-                endpoint.internal_group = '25'
             logging.debug("End-point characterized: " + json.dumps(endpoint.getDict(domain=True)))

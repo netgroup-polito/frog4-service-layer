@@ -85,7 +85,7 @@ class Graph(object):
     def get_last_graph(session_id):
         session = get_session()
         graph_refs = session.query(GraphModel).filter_by(session_id=session_id).all()
-        if graph_refs is not None:
+        if graph_refs is not None and len(graph_refs) > 0:
             last_graph = graph_refs[0]
             for graph_ref in graph_refs:
                 if graph_ref.id > last_graph.id:

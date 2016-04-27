@@ -54,6 +54,7 @@ class EndPointDB(object):
         """
 
         :param end_point_id:
+        :type end_point_id: str
         :return:
         :rtype: EndPointModel
         """

@@ -12,6 +12,7 @@ import uuid
 
 from service_layer_application_core.config import Configuration
 from service_layer_application_core.sql.domain import Domain
+from service_layer_application_core.sql.end_point import EndPointDB
 from service_layer_application_core.sql.graph import Graph
 from service_layer_application_core.sql.session import Session, UserDeviceModel
 from service_layer_application_core.sql.user import User, UserModel
@@ -216,6 +217,11 @@ class ServiceLayerController:
             session_id = uuid.uuid4().hex
             Session().inizializeSession(session_id, self.user_data.getUserID(), nffg.id, nffg.name)
 
+            # set the domain in root if available in endpoint
+            if device_endpoint_id is not None:
+                if EndPointDB.get_end_point(nffg.getEndPoint(device_endpoint_id).db_id).domain_name is not None:
+                    nffg.domain = EndPointDB.get_end_point(nffg.getEndPoint(device_endpoint_id).db_id).domain_name
+
             # clone the nffg into a service_graph before to start lowering, so we can add it into db if success
             sl_nffg = NF_FG()
             sl_nffg.parseDict(nffg.getDict(extended=True, domain=True))
@@ -346,8 +352,8 @@ class ServiceLayerController:
         # TODO: if end-point is ... then connect to ISP
         # Create connection to another NF-FG
         # TODO: The following row should be executed only if we want to concatenate ISP to our graphs
-        if ISP is True and nffg.name != 'ISP-Graph' and not already_connected:
-            self.remoteConnection(nffg)
+        # if ISP is True and nffg.name != 'ISP-Graph' and not already_connected:
+        #    self.remoteConnection(nffg)
 
         manager.mergeUselessVNFs()
 
@@ -385,7 +391,6 @@ class ServiceLayerController:
         Connect the nf_fg passed with the ISP graph
         """
         # isp_user_data = UserData(usr=ISP_USERNAME, pwd=ISP_PASSWORD, tnt=ISP_TENANT)
-
 
         try:
             from service_layer_application_core.isp_graph_manager import ISPGraphManager

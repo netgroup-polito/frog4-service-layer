@@ -61,6 +61,9 @@ class ISPGraphManager:
 
             # prepare the egress end point
             self._prepare_egress_end_point(nffg, domain_info)
+            # prepare the ingress end point
+            self._prepare_ingress_end_point(nffg, domain_info)
+
             # send to controller
             try:
                 user_data = UserData(self.isp_name, self.isp_password, self.isp_tenant)
@@ -131,6 +134,35 @@ class ISPGraphManager:
                     domain=domain_name,
                     _type='interface',
                     interface=egress_interface_name
+                )
+                # set the database id in the nffg
+                end_point.db_id = end_point_db_id
+
+    @staticmethod
+    def _prepare_ingress_end_point(nffg, domain_info):
+        """
+        According to informations exported by the domain about its interfaces, prepare a db
+        entry that allow the characterization of the egress end_point
+
+        :param domain_info:
+        :type domain_info: DomainInfo
+        :return:
+        """
+        ingress_interface_name = None
+
+        if domain_info is not None:
+            domain_name = domain_info.name
+        else:
+            domain_name = None
+
+        for end_point in nffg.end_points:
+            if end_point.name == Configuration().ISP_INGRESS:
+                # prepare an entry for this end point in db
+                end_point_db_id = EndPointDB.add_end_point(
+                    name=end_point.name,
+                    domain=domain_name,
+                    _type='internal',
+                    interface='25'
                 )
                 # set the database id in the nffg
                 end_point.db_id = end_point_db_id
