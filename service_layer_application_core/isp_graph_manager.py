@@ -20,6 +20,8 @@ from nffg_library.nffg import NF_FG, EndPoint, FlowRule, Port, Match, Action
 
 from .domain_info import DomainInfo
 
+VNF_AWARE_DOMAINS = Configuration().VNF_AWARE_DOMAINS
+
 
 class ISPGraphManager:
     orchestrator_ip = Configuration().ORCH_IP
@@ -54,7 +56,7 @@ class ISPGraphManager:
             domain_name = None
             logging.debug("Trying to instantiate the isp graph on the default domain...")
 
-        if (domain_info is None) or (domain_info.type == "UN"):
+        if (domain_info is None) or (domain_info.type in VNF_AWARE_DOMAINS):
 
             # get the isp graph
             nffg = NFFG_Manager.getNF_FGFromFile('isp_graph.json')

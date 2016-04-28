@@ -6,6 +6,7 @@ Created on Oct 1, 2014
 """
 import configparser
 import inspect
+import json
 import os
 
 
@@ -77,7 +78,8 @@ class Configuration(object):
         self._SWITCH_TEMPLATE = config.get('switch', 'template')
         self._DEFAULT_PRIORITY = config.get('flowrule', "default_priority")
 
-        self._ENRICH_USER_GRAPH = config.getboolean('user_graph_enrichment', 'enrich_user_graph')
+        self._ENRICH_USER_GRAPH = config.getboolean('other_settings', 'enrich_user_graph')
+        self._BLIND_ISP_DEPLOYMENT = config.getboolean('other_settings', 'blind_isp_deployment')
         self._INGRESS_GRAPH_FILE = config.get('ingress_nf_fg', "file")
         self._EGRESS_GRAPH_FILE = config.get('engress_nf_fg', "file")
 
@@ -97,6 +99,8 @@ class Configuration(object):
         # Orchestrator
         self._ISP = config.getboolean('orchestrator', 'isp')
         self._NOBODY = config.getboolean('orchestrator', 'nobody')
+
+        self._VNF_AWARE_DOMAINS = json.loads(config.get('other_settings', 'vnf_aware_domains'))
 
     @property
     def SERVICE_LAYER_IP(self):
@@ -247,6 +251,10 @@ class Configuration(object):
         return self._ISP_TENANT
 
     @property
+    def BLIND_ISP_DEPLOYMENT(self):
+        return self._BLIND_ISP_DEPLOYMENT
+
+    @property
     def ENRICH_USER_GRAPH(self):
         return self._ENRICH_USER_GRAPH
 
@@ -305,3 +313,7 @@ class Configuration(object):
     @property
     def DEBUG(self):
         return self._DEBUG
+
+    @property
+    def VNF_AWARE_DOMAINS(self):
+        return self._VNF_AWARE_DOMAINS

@@ -102,6 +102,7 @@ class ServiceLayer(object):
             if 'device' in request_dict['session']:
                 # add a new endpoint to the graph for this device if it came from a new port
                 graph_manager = ClientGraphManager(user_data)
+                graph_manager.prepare_egress_end_point()
                 device_endpoint_id = graph_manager.add_endpoint_from_auth_switch_interface(
                     request_dict['session']['device']['port']
                 )
