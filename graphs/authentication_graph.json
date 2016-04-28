@@ -2,6 +2,16 @@
   "forwarding-graph": {
     "id": "auth-00000001",
     "name": "Authentication-Graph",
+    "end-points": [
+      {
+        "id": "00000001",
+        "name": "ISP_CONNECTION"
+      },
+      {
+        "id": "00000002",
+        "name": "CP_CONTROL"
+      }
+    ],
     "VNFs": [
       {
         "vnf_template": "nobody_switch_no_ctrl.json",
@@ -27,7 +37,7 @@
           {
             "id": "inout:0"
           },
-	      {
+          {
             "id": "inout:1"
           }
         ]
@@ -43,19 +53,9 @@
         ]
       }
     ],
-    "end-points": [
-      {
-        "id": "00000001",
-        "name": "ISP_CONNECTION"
-      },
-      {
-        "id": "00000002",
-        "name": "CP_CONTROL"
-      }
-    ],
     "big-switch": {
       "flow-rules": [
-	{
+        {
           "id": "00000001",
           "priority": 1,
           "match": {
@@ -67,7 +67,7 @@
             }
           ]
         },
-	{
+        {
           "id": "00000002",
           "priority": 1,
           "match": {
@@ -79,7 +79,7 @@
             }
           ]
         },
-	{
+        {
           "id": "00000003",
           "priority": 1,
           "match": {
@@ -91,7 +91,7 @@
             }
           ]
         },
-	{
+        {
           "id": "00000004",
           "priority": 1,
           "match": {
@@ -103,7 +103,7 @@
             }
           ]
         },
-	{
+        {
           "id": "00000005",
           "priority": 1,
           "match": {
@@ -115,7 +115,7 @@
             }
           ]
         },
-	{
+        {
           "id": "00000006",
           "priority": 1,
           "match": {
@@ -127,7 +127,7 @@
             }
           ]
         },
-	{
+        {
           "id": "00000007",
           "priority": 1,
           "match": {
@@ -139,7 +139,7 @@
             }
           ]
         },
-	{
+        {
           "id": "00000008",
           "priority": 1,
           "match": {

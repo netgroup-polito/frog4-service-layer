@@ -1,89 +1,39 @@
 {
   "forwarding-graph": {
-    "id": "polito-00000001",
+    "id": "user1-graph",
     "name": "Protected access to the internet",
+    "end-points": [
+      {
+        "id": "00000001",
+        "name": "ISP_CONNECTION"
+      }
+    ],
+    "VNFs": [
+      {
+        "vnf_template": "cisco_firewall.json",
+        "ports": [
+          {
+            "id": "User:0",
+            "name": "user"
+          },
+          {
+            "id": "WAN:1"
+          }
+        ],
+        "id": "00000001",
+        "name": "fw-c"
+      }
+    ],
     "big-switch": {
       "flow-rules": [
         {
           "priority": 1,
           "actions": [
             {
-              "output_to_port": "vnf:00000001:L2Port:0"
+              "output_to_port": "vnf:00000001:WAN:1"
             }
           ],
           "id": "00000001",
-          "match": {
-            "port_in": "vnf:00000002:inout:0"
-          }
-        },
-        {
-          "priority": 1,
-          "actions": [
-            {
-              "output_to_port": "vnf:00000002:inout:0"
-            }
-          ],
-          "id": "00000002",
-          "match": {
-            "port_in": "vnf:00000001:L2Port:0"
-          }
-        },
-        {
-          "priority": 1,
-          "actions": [
-            {
-              "output_to_port": "vnf:00000001:L2Port:1"
-            }
-          ],
-          "id": "00000003",
-          "match": {
-            "port_in": "vnf:00000005:inout:0"
-          }
-        },
-        {
-          "priority": 1,
-          "actions": [
-            {
-              "output_to_port": "vnf:00000005:inout:0"
-            }
-          ],
-          "id": "00000004",
-          "match": {
-            "port_in": "vnf:00000001:L2Port:1"
-          }
-        },
-        {
-          "priority": 1,
-          "actions": [
-            {
-              "output_to_port": "vnf:00000004:User:1"
-            }
-          ],
-          "id": "00000005",
-          "match": {
-            "port_in": "vnf:00000003:WAN:0"
-          }
-        },
-        {
-          "priority": 1,
-          "actions": [
-            {
-              "output_to_port": "vnf:00000003:WAN:0"
-            }
-          ],
-          "id": "00000006",
-          "match": {
-            "port_in": "vnf:00000004:User:1"
-          }
-        },
-        {
-          "priority": 1,
-          "actions": [
-            {
-              "output_to_port": "vnf:00000004:WAN:0"
-            }
-          ],
-          "id": "00000007",
           "match": {
             "port_in": "endpoint:00000001"
           }
@@ -95,118 +45,12 @@
               "output_to_port": "endpoint:00000001"
             }
           ],
-          "id": "00000008",
+          "id": "00000002",
           "match": {
-            "port_in": "vnf:00000004:WAN:0"
-          }
-        },
-        {
-          "priority": 1,
-          "actions": [
-            {
-              "output_to_port": "vnf:00000005:inout:1"
-            }
-          ],
-          "id": "00000009",
-          "match": {
-            "port_in": "vnf:00000003:User:1"
-          }
-        },
-        {
-          "priority": 1,
-          "actions": [
-            {
-              "output_to_port": "vnf:00000003:User:1"
-            }
-          ],
-          "id": "00000010",
-          "match": {
-            "port_in": "vnf:00000005:inout:1"
+            "port_in": "vnf:00000001:WAN:1"
           }
         }
       ]
-    },
-    "VNFs": [
-      {
-        "groups": [
-          "isp-function"
-        ],
-        "vnf_template": "switch.json",
-        "ports": [
-          {
-            "id": "L2Port:0",
-            "name": "data-lan"
-          },
-          {
-            "id": "L2Port:1",
-            "name": "data-lan"
-          }
-        ],
-        "id": "00000001",
-        "name": "sw-c"
-      },
-      {
-        "groups": [
-          "isp-function"
-        ],
-        "vnf_template": "dhcp.json",
-        "ports": [
-          {
-            "id": "inout:0",
-            "name": "data-port"
-          }
-        ],
-        "id": "00000002",
-        "name": "dhcp-c"
-      },
-      {
-        "vnf_template": "cisco_monitor.json",
-        "ports": [
-          {
-            "id": "inout:0"
-          },
-          {
-            "id": "inout:1"
-          }
-        ],
-        "id": "00000005",
-        "name": "mnt-c"
-      },
-      {
-        "vnf_template": "cisco_firewall.json",
-        "ports": [
-          {
-            "id": "WAN:0"
-          },
-          {
-            "id": "User:1"
-          }
-        ],
-        "id": "00000003",
-        "name": "fw-c"
-      },
-      {
-        "groups": [
-          "isp-function"
-        ],
-        "vnf_template": "nat.json",
-        "ports": [
-          {
-            "id": "WAN:0"
-          },
-          {
-            "id": "User:1"
-          }
-        ],
-        "id": "00000004",
-        "name": "nat-c"
-      }
-    ],
-    "end-points": [
-      {
-        "id": "00000001",
-        "name": "ISP_CONNECTION"
-      }
-    ]
+    }
   }
 }

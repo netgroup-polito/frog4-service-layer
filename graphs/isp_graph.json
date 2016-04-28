@@ -2,6 +2,16 @@
   "forwarding-graph": {
     "id": "isp-00000001",
     "name": "ISP-Graph",
+    "end-points": [
+      {
+        "id": "00000001",
+        "name": "ISP_INGRESS"
+      },
+      {
+        "id": "00000002",
+        "name": "EGRESS"
+      }
+    ],
     "VNFs": [
       {
         "vnf_template": "switch.json",
@@ -47,16 +57,6 @@
         ],
         "name": "nat-i",
         "id": "00000003"
-      }
-    ],
-    "end-points": [
-      {
-        "id": "00000001",
-        "name": "ISP_INGRESS"
-      },
-      {
-        "id": "00000002",
-        "name": "EGRESS"
       }
     ],
     "big-switch": {
