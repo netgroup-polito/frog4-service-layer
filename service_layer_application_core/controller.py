@@ -45,6 +45,8 @@ ENRICH_USER_GRAPH = Configuration().ENRICH_USER_GRAPH
 
 DEBUG_MODE = Configuration().DEBUG_MODE
 
+VNF_AWARE_DOMAINS = Configuration().VNF_AWARE_DOMAINS
+
 
 class ServiceLayerController:
 
@@ -83,7 +85,7 @@ class ServiceLayerController:
 
         return nffg
 
-    def delete(self, mac_address):
+    def delete(self, mac_address, nffg):
         """
         If there are more active session for specific user a delete become an update
         that erase a mac rule of user, otherwise if there is only one active session for the user
@@ -118,12 +120,11 @@ class ServiceLayerController:
             Session().set_ended(session.id)
         else:
             logging.debug('Delete access for specific device')
-            # Get profile from session
-            nffg = self.orchestrator.getNFFG(session.service_graph_id)
             logging.debug('Old user profile :'+nffg.getJSON(domain=True))
 
             # profile_analisis = ProfileAnalisis()
             manager = NFFG_Manager(nffg)
+            # TODO fix this method like the addDevicesFlows one.
             manager.deleteMacAddressInFlows(mac_address, USER_INGRESS)
             logging.debug('New user profile :'+nffg.getJSON(domain=True))
 
@@ -219,7 +220,9 @@ class ServiceLayerController:
 
             # set the domain in root if available in endpoint
             if device_endpoint_id is not None:
-                if EndPointDB.get_end_point(nffg.getEndPoint(device_endpoint_id).db_id).domain_name is not None:
+                domain_name = EndPointDB.get_end_point(nffg.getEndPoint(device_endpoint_id).db_id).domain_name
+                domain_type = Domain.get_domain_from_name(domain_name).type
+                if domain_name is not None and domain_type in VNF_AWARE_DOMAINS:
                     nffg.domain = EndPointDB.get_end_point(nffg.getEndPoint(device_endpoint_id).db_id).domain_name
 
             # clone the nffg into a service_graph before to start lowering, so we can add it into db if success

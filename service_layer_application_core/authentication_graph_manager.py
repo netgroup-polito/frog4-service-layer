@@ -17,9 +17,16 @@ from service_layer_application_core.sql.session import Session
 from service_layer_application_core.sql.user import User
 from service_layer_application_core.sql.domain import Domain
 from service_layer_application_core.user_authentication import UserData
+from service_layer_application_core.isp_graph_manager import ISPGraphManager
 from nffg_library.nffg import NF_FG, EndPoint, FlowRule, Port, Match, Action
 
 from .domain_info import DomainInfo
+
+
+ISP_INGRESS = Configuration().ISP_INGRESS
+USER_EGRESS = Configuration().USER_EGRESS
+
+VNF_AWARE_DOMAINS = Configuration().VNF_AWARE_DOMAINS
 
 
 class AuthGraphManager:
@@ -56,13 +63,15 @@ class AuthGraphManager:
             domain_name = None
             logging.debug("Trying to instantiate the authentication graph on the default domain...")
 
-        if (domain_info is None) or (domain_info.type == "UN"):
+        if (domain_info is None) or (domain_info.type in VNF_AWARE_DOMAINS):
 
             # get the authentication graph
             nffg = NFFG_Manager.getNF_FGFromFile('authentication_graph.json')
 
             # prepare the captive portal control end point
             self._prepare_cp_control_end_point(nffg, domain_info)
+            # prepare the end point to isp
+            self._prepare_egress_end_point(nffg)
 
             # send to controller
             try:
@@ -135,7 +144,7 @@ class AuthGraphManager:
         if domain_info is not None:
             domain_name = domain_info.name
             for interface in domain_info.interfaces:
-                if interface.isLocal():
+                if interface.isLocal() and not interface.gre:
                     cp_interface_name = interface.name
                     break
         else:
@@ -155,6 +164,30 @@ class AuthGraphManager:
                 )
                 # set the database id in the nffg
                 end_point.db_id = end_point_db_id
+
+    @staticmethod
+    def _prepare_egress_end_point(nffg):
+        """
+        prepare the egress end_point of the auth graph to connect it with isp
+        :return:
+        """
+
+        auth_egress_endpoint = nffg.getEndPointsFromName(USER_EGRESS)[0]
+        if auth_egress_endpoint is not None:
+            isp_graph_manager = ISPGraphManager()
+            isp_nffg = isp_graph_manager.get_current_instance()
+            isp_end_point_model = EndPointDB.get_end_point(
+                isp_nffg.getEndPointsFromName(ISP_INGRESS)[0].db_id
+            )
+            # prepare an entry for this end point in db
+            user_egress_endpoint_db_id = EndPointDB.add_end_point(
+                name=auth_egress_endpoint.name,
+                domain=isp_end_point_model.domain_name,
+                _type='internal',
+                interface=isp_end_point_model.interface
+            )
+            # set the database id in the nffg
+            auth_egress_endpoint.db_id = user_egress_endpoint_db_id
 
     # not used
     def get_current_instance(self):

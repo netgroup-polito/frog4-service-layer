@@ -99,7 +99,7 @@ class Interface(object):
             self.vlan = True
             if 'openconfig-vlan:config' in interface_dict['openconfig-if-ethernet:ethernet']['openconfig-vlan:vlan']:
                 vlan_config = interface_dict['openconfig-if-ethernet:ethernet']['openconfig-vlan:vlan']['openconfig-vlan:config']
-                if vlan_config['interface-mode']=="TRUNK":
+                if vlan_config['interface-mode'] == "TRUNK":
                     for vlan in vlan_config['trunk-vlans']:
                         self.vlans_free.append(vlan)
 

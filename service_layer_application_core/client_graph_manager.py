@@ -7,19 +7,21 @@ Created on Apr 21, 2016
 import json
 import logging
 
-from nffg_library.nffg import EndPoint, Port, FlowRule, Match, Action, NF_FG
+from nffg_library.nffg import EndPoint, FlowRule, Match, Action, NF_FG
 from service_layer_application_core.authentication_graph_manager import AuthGraphManager
 from service_layer_application_core.common.user_session import UserSession
 from service_layer_application_core.config import Configuration
 from service_layer_application_core.exception import GraphNotFound, SessionNotFound
 from service_layer_application_core.nffg_manager import NFFG_Manager
 from service_layer_application_core.orchestrator_rest import GlobalOrchestrator
-from service_layer_application_core.sql.domain import Domain
+from service_layer_application_core.sql.end_point import EndPointDB
 from service_layer_application_core.sql.graph import Graph
 from service_layer_application_core.sql.session import Session
 from service_layer_application_core.sql.user import User
 from service_layer_application_core.user_authentication import UserData
 
+ISP_INGRESS = Configuration().ISP_INGRESS
+USER_EGRESS = Configuration().USER_EGRESS
 
 class ClientGraphManager:
 
@@ -80,21 +82,16 @@ class ClientGraphManager:
             logging.debug("Endpoint '" + service_user_end_point.id + "' created: " +
                           json.dumps(service_user_end_point.getDict(extended=True, domain=True)))
 
-            # add a new port to the switch VNF
-            switch_vnf = self.nffg.getVNF("00000001")
-            port_label = switch_vnf.ports[0].id.split(":")[0]
-            new_relative_id = int(switch_vnf.getHigherReletiveIDForPortLabel(port_label)) + 1
-            new_port = Port(port_label + ":" + str(new_relative_id))
-            switch_vnf.addPort(new_port)
-            logging.debug("New port '" + new_port.id + "' inserted into switch VNF")
-            logging.debug("Updated VNF: '" + str(switch_vnf.getDict(domain=True)))
+            # get the user ingress port
+            ingress_vnf, user_port = self._get_user_ingress_port()
+            logging.debug("User port is: '" + user_port.id + "' of vnf: '" + ingress_vnf.id + "'")
 
-            # insert two flow rules to connect the end point to the switch VNF
+            # insert two flow rules to connect the end point to the first VNF
             logging.debug("Creating flow rules for endpoint '" + service_user_end_point.id + "'...")
             to_user_flow_rule = FlowRule(
                 _id=self.nffg.getNextAvailableFlowRuleId(),
                 priority=10,
-                match=Match(port_in='vnf:' + switch_vnf.id + ':' + new_port.id)
+                match=Match(port_in='vnf:' + ingress_vnf.id + ':' + user_port.id)
             )
             to_user_flow_rule.actions.append(Action(output='endpoint:' + service_user_end_point.id))
             self.nffg.addFlowRule(to_user_flow_rule)
@@ -104,7 +101,7 @@ class ClientGraphManager:
                 priority=10,
                 match=Match(port_in='endpoint:' + service_user_end_point.id)
             )
-            from_user_flow_rule.actions.append(Action(output='vnf:' + switch_vnf.id + ':' + new_port.id))
+            from_user_flow_rule.actions.append(Action(output='vnf:' + ingress_vnf.id + ':' + user_port.id))
             self.nffg.addFlowRule(from_user_flow_rule)
             logging.debug("Appended flow rule: " + str(from_user_flow_rule.getDict()))
         else:
@@ -118,8 +115,24 @@ class ClientGraphManager:
         prepare the egress end_point of the client graph to connect it with isp
         :return:
         """
-        # maybe this is yet done by "default" switch case in 'characterizeEndPoints'
-        pass
+        from service_layer_application_core.isp_graph_manager import ISPGraphManager
+
+        user_egress_endpoint = self.nffg.getEndPointsFromName(USER_EGRESS)[0]
+        if user_egress_endpoint is not None:
+            isp_graph_manager = ISPGraphManager()
+            isp_nffg = isp_graph_manager.get_current_instance()
+            isp_end_point_model = EndPointDB.get_end_point(
+                isp_nffg.getEndPointsFromName(ISP_INGRESS)[0].db_id
+            )
+            # prepare an entry for this end point in db
+            user_egress_endpoint_db_id = EndPointDB.add_end_point(
+                name=user_egress_endpoint.name,
+                domain=isp_end_point_model.domain_name,
+                _type='internal',
+                interface=isp_end_point_model.interface
+            )
+            # set the database id in the nffg
+            user_egress_endpoint.db_id = user_egress_endpoint_db_id
 
     def is_instantiated(self):
         """
@@ -167,3 +180,9 @@ class ClientGraphManager:
             raise GraphNotFound("No graph defined for the user '" + self.user_name + "'")
         nffg = NFFG_Manager.getNF_FGFromFile(nffg_file)
         return nffg
+
+    def _get_user_ingress_port(self):
+        for vnf in self.nffg.vnfs:
+            for port in vnf.ports:
+                if port.name == 'user':
+                    return vnf, port

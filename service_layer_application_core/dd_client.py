@@ -15,8 +15,7 @@ from .sql.domain import Domain
 from .sql.domains_info import DomainInformation
 from .authentication_graph_manager import AuthGraphManager
 
-DEBUG_MODE = Configuration().DEBUG_MODE
-
+BLIND_ISP_DEPLOYMENT = Configuration().BLIND_ISP_DEPLOYMENT
 
 class DDClient(ClientSafe):
 
@@ -26,7 +25,7 @@ class DDClient(ClientSafe):
         self.isp_graph_manager = ISPGraphManager()
         self.auth_graph_manager = AuthGraphManager()
 
-        if not DEBUG_MODE:
+        if BLIND_ISP_DEPLOYMENT:
             # request to instantiate the isp graph on the default domain
             if not self.isp_graph_manager.is_instantiated():
                 self.isp_graph_manager.instantiate_isp_graph()
