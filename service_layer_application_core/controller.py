@@ -93,26 +93,38 @@ class ServiceLayerController:
 
         :param mac_address: the mac which rule has to be erased, if no one is specified,
                             the whole NF_FG will be de-instantiated.
+        :param nffg: current instance of nffg for this user
+        :type nffg: NF_FG
         """
 
         # Returns the number of active session for the user, and if exists the session for the requested device
-        num_sessions, session = Session().get_active_user_device_session(self.user_data.getUserID(),
-                                                                         mac_address,
-                                                                         error_aware=False)
+        num_devices, session = Session().get_active_user_device_session(self.user_data.getUserID(),
+                                                                        mac_address,
+                                                                        error_aware=False)
 
         if mac_address is not None:
             logging.debug("Delete access for device: "+str(mac_address)+" of User: "+self.user_data.username)
         else:
             logging.debug("Delete user service graph: "+self.user_data.username)
-        logging.debug("Number of devices for the user: "+str(num_sessions))
+        logging.debug("Number of devices for the user: "+str(num_devices))
         ended = None
-        if num_sessions == 1:
+        if num_devices == 1:
             # De-instantiate User Profile Graph
             if DEBUG_MODE is False:
                 try:
                     self.orchestrator.delete(session.service_graph_id)
-                except:
+                    Graph().delete_session(session.id)
+                    Session().delete_user_devices_for_session(session.id)
+                    Session().updateStatus(session.id, 'deleted')
+                    Session().set_ended(session.id)
+                except Exception as err:
                     Session().set_error(session.id)
+                    raise err
+            else:
+                # debug mode
+                Graph().delete_session(session.id)
+                Session().delete_user_devices_for_session(session.id)
+
             logging.debug('Deleted profile of user \"'+self.user_data.username+'\"')
             print('Deleted profile of user "' + self.user_data.username + '"')
 
@@ -120,27 +132,37 @@ class ServiceLayerController:
             Session().set_ended(session.id)
         else:
             logging.debug('Delete access for specific device')
-            logging.debug('Old user profile :'+nffg.getJSON(domain=True))
 
-            # profile_analisis = ProfileAnalisis()
-            manager = NFFG_Manager(nffg)
-            # TODO fix this method like the addDevicesFlows one.
-            manager.deleteMacAddressInFlows(mac_address, USER_INGRESS)
+            # This delete is an update of the user service graph
+            # clone the nffg into a service_graph before to start lowering, so we can add it into db if success
+            sl_nffg = NF_FG()
+            sl_nffg.parseDict(nffg.getDict(extended=True, domain=True))
+
+            # delete this device
+            Session().delete_user_device_for_session(session.id, mac_address=mac_address)
+
+            # add old devices
+            self.addDeviceToNF_FG(None, None, nffg)
+
             logging.debug('New user profile :'+nffg.getJSON(domain=True))
 
+            # Call orchestrator to update NF-FG
+            logging.debug('Call orchestrator sending the following NF-FG: '+nffg.getJSON(domain=True))
             if DEBUG_MODE is False:
-                # Call CA for update graph without rule for deleted device
                 try:
                     self.orchestrator.put(nffg)
-                except:
+                    Session().updateStatus(session.id, 'updated')
+                    Graph.set_service_graph(Graph.get_last_graph(session.id).id, sl_nffg)
+                except Exception as err:
                     Session().set_error(session.id)
+                    raise err
+            else:
+                # debug mode
+                Session().updateStatus(session.id, 'updated')
+                Graph.set_service_graph(Graph.get_last_graph(session.id).id, sl_nffg)
+
             logging.debug('Device deleted "'+mac_address+'" of user "'+self.user_data.username+'"')
             print('Device deleted "' + mac_address + '" of user "' + self.user_data.username + '"')
-
-        if mac_address is not None:
-            Session().del_mac_address_in_the_session(mac_address, session.id)
-        # TODO gabriele - if num_sessions == 1 this query will fail because it filters on "ended = NONE"
-        Session().updateStatus(session.id, 'deleted')
 
     def put(self, mac_address=None, device_endpoint_id=None, domain_name=None, nffg=None):
         """

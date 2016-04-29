@@ -165,17 +165,35 @@ class NFFG_Manager(object):
         self.connectVNFs(self.control_switch.id, control_switch_port.id, vnf.id, port_id)
         return self.control_switch
 
-    def deleteMacAddressInFlows(self, mac_address, endpoint_name):
+    def deleteMacAddressInFlows(self, mac_address, device_endpoint_id):
         """
         UserDefnedServiceFunction function that connects the endpoint switch to the VNF
         """
-        endpoint = self.nffg.getEndPointsFromName(endpoint_name)[0]
-        logging.debug("Deleting flow rule based on mac address: "+mac_address)
-        flow_rules = self.nffg.getFlowRulesSendingTrafficFromEndPoint(endpoint.id)
+        logging.debug("Deleting flow rule based on mac address: " + mac_address)
 
-        for flow_rule in flow_rules[:]:
+        # delete flow from endpoint
+        from_user_flow_rules = self.nffg.getFlowRulesSendingTrafficFromEndPoint(device_endpoint_id)
+        for flow_rule in from_user_flow_rules[:]:
             if flow_rule.match.source_mac == mac_address:
                 self.nffg.flow_rules.remove(flow_rule)
+
+        # delete flow versus endpoint
+        to_user_flow_rules = self.nffg.getFlowRulesSendingTrafficToEndPoint(device_endpoint_id)
+        for flow_rule in to_user_flow_rules[:]:
+            if flow_rule.match.dest_mac == mac_address:
+                self.nffg.flow_rules.remove(flow_rule)
+
+    def getNumberOfFlowsForEndPoint(self, endpoint_id):
+
+        n_flows = 0
+        n_flows += len(self.nffg.getFlowRulesSendingTrafficFromEndPoint(endpoint_id))
+        n_flows += len(self.nffg.getFlowRulesSendingTrafficToEndPoint(endpoint_id))
+        return n_flows
+
+    def deleteEndPoint(self, endpoint_id):
+
+        endpoint = self.nffg.getEndPoint(endpoint_id)
+        self.nffg.end_points.remove(endpoint)
 
     def deleteEndpointSwitch(self, switch, endpoint):
         """
@@ -252,30 +270,30 @@ class NFFG_Manager(object):
         for ingress_endpoint_id in ingress_endpoints_id:
             ingress_endpoint = self.nffg.getEndPoint(ingress_endpoint_id)
             # Find flow rules from end-point
-            original_ingress_flow_rules = self.nffg.getFlowRulesSendingTrafficFromEndPoint(ingress_endpoint_id)
-            ingress_flow_rules = copy.deepcopy(original_ingress_flow_rules)
-            for original_ingress_flow_rule in original_ingress_flow_rules:
-                self.nffg.flow_rules.remove(original_ingress_flow_rule)
+            original_from_user_flow_rules = self.nffg.getFlowRulesSendingTrafficFromEndPoint(ingress_endpoint_id)
+            from_user_flow_rules = copy.deepcopy(original_from_user_flow_rules)
+            for original_from_user_flow_rule in original_from_user_flow_rules:
+                self.nffg.flow_rules.remove(original_from_user_flow_rule)
             for user_device in user_devices:
                 if user_device.endpoint_id == ingress_endpoint_id:
-                    for ingress_flow_rule in ingress_flow_rules:
-                        ingress_flow_rule.priority = 1000
-                        ingress_flow_rule.match.source_mac = user_device.mac_address
-                        ingress_flow_rule.id = uuid.uuid4().hex
-                        flow_copy = copy.deepcopy(ingress_flow_rule)
+                    for flow_rule in from_user_flow_rules:
+                        flow_rule.priority = 1000
+                        flow_rule.match.source_mac = user_device.mac_address
+                        flow_rule.id = uuid.uuid4().hex
+                        flow_copy = copy.deepcopy(flow_rule)
                         self.nffg.flow_rules.append(flow_copy)
             # Find flow rules versus the end-point
-            original_return_flow_rules = self.nffg.getFlowRulesSendingTrafficToEndPoint(ingress_endpoint_id)
-            return_flow_rules = copy.deepcopy(original_return_flow_rules)
-            for original_return_flow_rule in original_return_flow_rules:
-                self.nffg.flow_rules.remove(original_return_flow_rule)
+            original_to_user_flow_rules = self.nffg.getFlowRulesSendingTrafficToEndPoint(ingress_endpoint_id)
+            to_user_flow_rules = copy.deepcopy(original_to_user_flow_rules)
+            for original_to_user_flow_rule in original_to_user_flow_rules:
+                self.nffg.flow_rules.remove(original_to_user_flow_rule)
             for user_device in user_devices:
                 if user_device.endpoint_id == ingress_endpoint_id:
-                    for return_flow_rule in return_flow_rules:
-                        return_flow_rule.priority = 1000
-                        return_flow_rule.match.dest_mac = user_device.mac_address
-                        return_flow_rule.id = uuid.uuid4().hex
-                        flow_copy = copy.deepcopy(return_flow_rule)
+                    for flow_rule in to_user_flow_rules:
+                        flow_rule.priority = 1000
+                        flow_rule.match.dest_mac = user_device.mac_address
+                        flow_rule.id = uuid.uuid4().hex
+                        flow_copy = copy.deepcopy(flow_rule)
                         self.nffg.flow_rules.append(flow_copy)
 
     def setDeviceFlows(self, user_device):
@@ -286,18 +304,18 @@ class NFFG_Manager(object):
         :return:
         """
         # Find flow rules from the end-point
-        ingress_flow_rules = self.nffg.getFlowRulesSendingTrafficFromEndPoint(user_device.endpoint_id)
-        for ingress_flow_rule in ingress_flow_rules:
-            ingress_flow_rule.priority = 1000
-            ingress_flow_rule.match.source_mac = user_device.mac_address
-            ingress_flow_rule.id = uuid.uuid4().hex
+        from_user_flow_rules = self.nffg.getFlowRulesSendingTrafficFromEndPoint(user_device.endpoint_id)
+        for flow_rule in from_user_flow_rules:
+            flow_rule.priority = 1000
+            flow_rule.match.source_mac = user_device.mac_address
+            flow_rule.id = uuid.uuid4().hex
 
         # Find flow rules versus the end-point
-        return_flow_rules = self.nffg.getFlowRulesSendingTrafficToEndPoint(user_device.endpoint_id)
-        for return_flow_rule in return_flow_rules:
-            return_flow_rule.priority = 1000
-            return_flow_rule.match.dest_mac = user_device.mac_address
-            return_flow_rule.id = uuid.uuid4().hex
+        to_user_flow_rules = self.nffg.getFlowRulesSendingTrafficToEndPoint(user_device.endpoint_id)
+        for flow_rule in to_user_flow_rules:
+            flow_rule.priority = 1000
+            flow_rule.match.dest_mac = user_device.mac_address
+            flow_rule.id = uuid.uuid4().hex
 
     def attachIngressNF_FG(self, ingress_nffg):
         self.nffg.attachNF_FG( ingress_nffg, SG_USER_INGRESS)

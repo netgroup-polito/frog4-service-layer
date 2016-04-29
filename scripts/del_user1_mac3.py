@@ -11,11 +11,11 @@ log_level = logging.DEBUG
 
 log_format = '%(asctime)s %(levelname)s %(message)s - %(filename)s:%(lineno)s'
 
-logging.basicConfig(filename='script4.log', level=log_level, format=log_format, datefmt='%m/%d/%Y %I:%M:%S %p')
+logging.basicConfig(filename='script6.log', level=log_level, format=log_format, datefmt='%m/%d/%Y %I:%M:%S %p')
 logging.debug("Service Layer Starting")
 
 try:
-    mac_address = '11:11:11:aa:aa:aa'
+    mac_address = '33:33:33:cc:cc:cc'
     user_data = UserAuthentication().authenticateUserFromCredentials('user1', 'password1', 'public')
     graph_manager = ClientGraphManager(user_data)
     graph_manager.delete_endpoint_from_user_device_if_last(mac_address)

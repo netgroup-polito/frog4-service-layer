@@ -23,6 +23,7 @@ from service_layer_application_core.user_authentication import UserData
 ISP_INGRESS = Configuration().ISP_INGRESS
 USER_EGRESS = Configuration().USER_EGRESS
 
+
 class ClientGraphManager:
 
     orchestrator_ip = Configuration().ORCH_IP
@@ -109,6 +110,23 @@ class ClientGraphManager:
             logging.debug("There is yet an end point for this interface in the user graph.")
 
         return service_user_end_point.id
+
+    def delete_endpoint_from_user_device_if_last(self, mac_address):
+
+        user_device = Session().get_user_device(self.user_id, mac_address)
+        user_devices = Session().get_active_user_devices_for_endpoint(self.user_id, user_device.endpoint_id)
+
+        # delete endpoint if is the last device
+        if len(user_devices) == 1:
+            # delete flow rules
+            to_user_flow_rules = self.nffg.getFlowRulesSendingTrafficToEndPoint(user_device.endpoint_id)
+            for flow_rule in to_user_flow_rules:
+                self.nffg.flow_rules.remove(flow_rule)
+            from_user_flow_rules = self.nffg.getFlowRulesSendingTrafficFromEndPoint(user_device.endpoint_id)
+            for flow_rule in from_user_flow_rules:
+                self.nffg.flow_rules.remove(flow_rule)
+            # delete endpoint
+            self.nffg.end_points.remove(self.nffg.getEndPoint(user_device.endpoint_id))
 
     def prepare_egress_end_point(self):
         """

@@ -14,7 +14,7 @@
     ],
     "VNFs": [
       {
-        "vnf_template": "switch.json",
+        "vnf_template": "nobody_switch_no_ctrl.json",
         "id": "00000001",
         "name": "sw-i",
         "ports": [

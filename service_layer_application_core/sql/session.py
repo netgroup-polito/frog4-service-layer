@@ -155,7 +155,44 @@ class Session(object):
                 if device.mac_address == mac_address:
                     return len(devices), user_session
             raise SessionNotFound("Device not found in the user session")
-    
+
+    def get_user_device(self, user_id, mac_address):
+        """
+
+        :param user_id:
+        :param mac_address:
+        :return:
+        :rtype: UserDeviceModel
+        """
+        session = get_session()
+        # get user session
+        user_session = session.query(SessionModel)\
+            .filter_by(user_id=user_id)\
+            .filter_by(ended=None)\
+            .filter_by(error=None)\
+            .first()
+
+        user_device = session.query(UserDeviceModel)\
+            .filter_by(session_id=user_session.id)\
+            .filter_by(mac_address=mac_address)\
+            .one()
+        return user_device
+
+    def delete_user_devices_for_session(self, session_id):
+
+        session = get_session()
+        session.query(UserDeviceModel)\
+            .filter_by(session_id=session_id)\
+            .delete()
+
+    def delete_user_device_for_session(self, session_id, mac_address):
+
+        session = get_session()
+        session.query(UserDeviceModel)\
+            .filter_by(session_id=session_id)\
+            .filter_by(mac_address=mac_address)\
+            .delete()
+
     def set_ended(self, session_id):
         """
         Set the ended status for the session identified with session_id
@@ -222,15 +259,6 @@ class Session(object):
                 endpoint_id=endpoint_id
             )
             session.add(user_device_ref)
-    
-    @staticmethod
-    def del_mac_address_in_the_session(mac_address, session_id):
-        session = get_session()
-        with session.begin():     
-            session.query(UserDeviceModel)\
-                .filter_by(session_id=session_id)\
-                .filter_by(mac_address=mac_address)\
-                .delete()
 
     @staticmethod
     def get_active_user_devices(user_id):
@@ -245,6 +273,28 @@ class Session(object):
             devices = session.query(UserDeviceModel).filter_by(session_id=user_session.id).all()
             for device in devices:
                 user_devices.append(device)
+        return user_devices
+
+    def get_active_user_devices_for_endpoint(self, user_id, endpoint_id):
+        """
+
+        :param user_id:
+        :param endpoint_id:
+        :return:
+        :rtype: list of UserDeviceModel
+        """
+        session = get_session()
+        # get user session
+        user_session = session.query(SessionModel)\
+            .filter_by(user_id=user_id)\
+            .filter_by(ended=None)\
+            .filter_by(error=None)\
+            .first()
+
+        user_devices = session.query(UserDeviceModel)\
+            .filter_by(session_id=user_session.id)\
+            .filter_by(endpoint_id=endpoint_id)\
+            .all()
         return user_devices
 
     def get_active_user_session_from_id(self, session_id):
