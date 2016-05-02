@@ -7,7 +7,7 @@ import sqlalchemy
 from sqlalchemy.orm import sessionmaker
 from service_layer_application_core.config import Configuration
 
-sqlserver = Configuration().CONNECTION
+sqlserver = Configuration().DB_CONNECTION
 
 def create_session():
     engine = sqlalchemy.create_engine(sqlserver)  # connect to server

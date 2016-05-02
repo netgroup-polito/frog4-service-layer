@@ -12,7 +12,7 @@ from service_layer_application_core.sql.sql_server import get_session
 from service_layer_application_core.config import Configuration
 
 Base = declarative_base()
-sql_server = Configuration().CONNECTION
+sql_server = Configuration().DB_CONNECTION
 
 
 class EndPointModel(Base):

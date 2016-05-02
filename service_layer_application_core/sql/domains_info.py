@@ -16,7 +16,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from service_layer_application_core.sql.domain import DomainModel
 
 Base = declarative_base()
-sql_server = Configuration().CONNECTION
+sql_server = Configuration().DB_CONNECTION
 
 
 class DomainsInformationModel(Base):

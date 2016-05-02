@@ -35,7 +35,7 @@ class Configuration(object):
         self._LOG_FILE = config.get('log', 'log_file')
         self._VERBOSE = config.getboolean('log', 'verbose')
         self._DEBUG = config.getboolean('log', 'debug')
-        self._CONNECTION = config.get('db', 'connection')
+        self._DB_CONNECTION = config.get('db', 'connection')
         self._NOBODY_USERNAME = config.get('nobody', 'username')
         self._NOBODY_PASSWORD = config.get('nobody', 'password')
         self._NOBODY_TENANT = config.get('nobody', 'tenant')
@@ -46,14 +46,9 @@ class Configuration(object):
         self._ISP_TENANT = config.get('ISP', 'tenant')
 
         # ports
-        self._INGRESS_PORT = config.get('user_connection', 'ingress_port')
         self._INGRESS_TYPE = config.get('user_connection', 'ingress_type')
-        self._REMOTE_INGRESS_PORT = config.get('user_connection', 'remote_ingress_port')
-        self._REMOTE_INGRESS_TYPE = config.get('user_connection', 'remote_ingress_type')
         self._EGRESS_PORT = config.get('user_connection', 'egress_port')
         self._EGRESS_TYPE = config.get('user_connection', 'egress_type')
-        self._REMOTE_EGRESS_PORT = config.get('user_connection', 'remote_egress_port')
-        self._REMOTE_EGRESS_TYPE = config.get('user_connection', 'remote_egress_type')
         self._CP_CONTROL_PORT = config.get('user_connection', 'cp_control_port')
         self._CP_CONTROL_TYPE = config.get('user_connection', 'cp_control_type')
 
@@ -74,6 +69,8 @@ class Configuration(object):
         self._ORCH_IP = config.get('orchestrator', 'ip')
         self._ORCH_TIMEOUT = config.get('orchestrator', 'timeout')
 
+        self._CAPTIVE_PORTAL_IP = config.get('captive_portal', 'ip')
+
         self._FLOW_PRIORITY = config.get('user_connection', 'flow_priority')
         self._SWITCH_TEMPLATE = config.get('switch', 'template')
         self._DEFAULT_PRIORITY = config.get('flowrule', "default_priority")
@@ -88,7 +85,6 @@ class Configuration(object):
         self._SG_USER_EGRESS = config.get('endpoint_type', 'sg_user_egress')
         self._USER_INGRESS = config.get('endpoint_type', 'user_ingress')
         self._REMOTE_USER_INGRESS = config.get('endpoint_type', 'remote_user_ingress')
-        self._REMOTE_GRAPH_EGRESS = config.get('endpoint_type', 'remote_graph_egress')
         self._USER_EGRESS = config.get('endpoint_type', 'user_egress')
         self._ISP_INGRESS = config.get('endpoint_type', 'isp_ingress')
         self._ISP_EGRESS = config.get('endpoint_type', 'isp_egress')
@@ -141,10 +137,6 @@ class Configuration(object):
     @property
     def REMOTE_USER_INGRESS(self):
         return self._REMOTE_USER_INGRESS
-
-    @property
-    def REMOTE_GRAPH_EGRESS(self):
-        return self._REMOTE_GRAPH_EGRESS
 
     @property
     def USER_EGRESS(self):
@@ -211,26 +203,6 @@ class Configuration(object):
         return self._INGRESS_TYPE
 
     @property
-    def INGRESS_PORT(self):
-        return self._INGRESS_PORT
-
-    @property
-    def REMOTE_INGRESS_TYPE(self):
-        return self._REMOTE_INGRESS_TYPE
-
-    @property
-    def REMOTE_INGRESS_PORT(self):
-        return self._REMOTE_INGRESS_PORT
-
-    @property
-    def REMOTE_EGRESS_PORT(self):
-        return self._REMOTE_EGRESS_PORT
-
-    @property
-    def REMOTE_EGRESS_TYPE(self):
-        return self._REMOTE_EGRESS_TYPE
-
-    @property
     def CP_CONTROL_PORT(self):
         return self._CP_CONTROL_PORT
 
@@ -287,6 +259,10 @@ class Configuration(object):
         return self._ORCH_PORT
 
     @property
+    def CAPTIVE_PORTAL_IP(self):
+        return self._CAPTIVE_PORTAL_IP
+
+    @property
     def NOBODY_USERNAME(self):
         return self._NOBODY_USERNAME
 
@@ -299,8 +275,8 @@ class Configuration(object):
         return self._NOBODY_TENANT
 
     @property
-    def CONNECTION(self):
-        return self._CONNECTION
+    def DB_CONNECTION(self):
+        return self._DB_CONNECTION
 
     @property
     def LOG_FILE(self):

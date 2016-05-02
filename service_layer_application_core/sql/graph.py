@@ -17,7 +17,7 @@ from service_layer_application_core.config import Configuration
 from service_layer_application_core.sql.session import Session
 
 Base = declarative_base()
-sql_server = Configuration().CONNECTION
+sql_server = Configuration().DB_CONNECTION
 
 
 class GraphModel(Base):
