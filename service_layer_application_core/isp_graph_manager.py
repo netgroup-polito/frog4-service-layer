@@ -21,7 +21,7 @@ from nffg_library.nffg import NF_FG, EndPoint, FlowRule, Port, Match, Action
 from .domain_info import DomainInfo
 
 VNF_AWARE_DOMAINS = Configuration().VNF_AWARE_DOMAINS
-
+EGRESS_TYPE = Configuration().EGRESS_TYPE
 
 class ISPGraphManager:
     orchestrator_ip = Configuration().ORCH_IP
@@ -134,7 +134,7 @@ class ISPGraphManager:
                 end_point_db_id = EndPointDB.add_end_point(
                     name=end_point.name,
                     domain=domain_name,
-                    _type='interface',
+                    _type=EGRESS_TYPE,
                     interface=egress_interface_name
                 )
                 # set the database id in the nffg

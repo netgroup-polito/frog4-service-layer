@@ -23,8 +23,12 @@ from nffg_library.nffg import NF_FG, EndPoint, FlowRule, Port, Match, Action
 from .domain_info import DomainInfo
 
 
+CAPTIVE_PORTAL_IP = Configuration().CAPTIVE_PORTAL_IP
+
 ISP_INGRESS = Configuration().ISP_INGRESS
 USER_EGRESS = Configuration().USER_EGRESS
+
+INGRESS_TYPE = Configuration().INGRESS_TYPE
 
 VNF_AWARE_DOMAINS = Configuration().VNF_AWARE_DOMAINS
 
@@ -241,7 +245,7 @@ class AuthGraphManager:
                     end_point_db_id = EndPointDB.add_end_point(
                         name=end_point_name,
                         domain=remote_domain_info.name,
-                        _type='interface',
+                        _type=INGRESS_TYPE,
                         interface=interface.name
                     )
                     # create a new end-point
@@ -281,6 +285,33 @@ class AuthGraphManager:
                     from_user_flow_rule.actions.append(Action(output='vnf:' + switch_vnf.id + ':' + new_port.id))
                     nffg.addFlowRule(from_user_flow_rule)
                     logging.debug("Appended flow rule: " + str(from_user_flow_rule.getDict()))
+
+                    # insert flow rules to allow users to reach CP after authentication
+                    to_cp_arp_flow_rule = FlowRule(
+                        _id=nffg.getNextAvailableFlowRuleId(),
+                        priority=65535,
+                        match=Match(
+                            port_in='endpoint:' + end_point.id,
+                            ether_type='0x0806',
+                            arp_tpa=CAPTIVE_PORTAL_IP
+                        )
+                    )
+                    to_cp_arp_flow_rule.actions.append(Action(output='vnf:' + switch_vnf.id + ':' + new_port.id))
+                    nffg.addFlowRule(to_cp_arp_flow_rule)
+                    logging.debug("Appended flow rule: " + str(to_cp_arp_flow_rule.getDict()))
+                    to_cp_ip_flow_rule = FlowRule(
+                        _id=nffg.getNextAvailableFlowRuleId(),
+                        priority=65535,
+                        match=Match(
+                            port_in='endpoint:' + end_point.id,
+                            ether_type='0x0800',
+                            dest_ip=CAPTIVE_PORTAL_IP
+                        )
+                    )
+                    to_cp_ip_flow_rule.actions.append(Action(output='vnf:' + switch_vnf.id + ':' + new_port.id))
+                    nffg.addFlowRule(to_cp_ip_flow_rule)
+                    logging.debug("Appended flow rule: " + str(to_cp_ip_flow_rule.getDict()))
+
                     new_endpoints = True
 
             # update the authentication graph
