@@ -1,6 +1,6 @@
 {
   "forwarding-graph": {
-    "id": "user1-graph",
+    "id": "user2-graph",
     "name": "Protected access to the internet",
     "end-points": [
       {
@@ -21,7 +21,7 @@
           }
         ],
         "id": "00000001",
-        "name": "fw-c1"
+        "name": "fw-c2"
       }
     ],
     "big-switch": {

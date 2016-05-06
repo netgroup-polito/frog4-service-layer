@@ -41,9 +41,11 @@ class ServiceLayer(object):
         """
         try:
             user_data = UserAuthentication().authenticateUserFromRESTRequest(request)
+            graph_manager = ClientGraphManager(user_data)
+            graph_manager.delete_endpoint_from_user_device_if_last(mac_address)
             # Now, it initialize a new controller instance to handle the request
             controller = ServiceLayerController(user_data)
-            controller.delete(mac_address=mac_address)
+            controller.delete(mac_address=mac_address, nffg=graph_manager.nffg)
         except NoResultFound:
             print("EXCEPTION - NoResultFound")
             raise falcon.HTTPNotFound()
@@ -143,6 +145,7 @@ class ServiceLayer(object):
             logging.exception("Falcon " + err.title)
             raise err
         except UnauthorizedRequest as err:
+            logging.error("Authentication error: " + err.message)
             raise falcon.HTTPUnauthorized("Authentication error. ", err.message)
         except GraphNotFound as err:
             raise falcon.HTTPForbidden("Graph not found. ", err.message)

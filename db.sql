@@ -1,3 +1,4 @@
+# noinspection SqlNoDataSourceInspectionForFile
 -- phpMyAdmin SQL Dump
 -- version 4.4.10
 -- http://www.phpmyadmin.net
@@ -218,8 +219,8 @@ CREATE TABLE IF NOT EXISTS `graph` (
 REPLACE INTO `user` (`id`, `name`, `password`, `tenant_id`, `service_graph`) VALUES
 ('0', 'admin', 'qwerty', '0', 'authentication_graph.json'),
 ('1', 'user1', 'password1', '2', 'client_graph_1.json'),
-('2', 'isp', 'isp', '1', 'isp_graph.json');
-
+('2', 'isp', 'isp', '1', 'isp_graph.json'),
+('3', 'user2', 'password1', '2', 'client_graph_2.json');
 --
 -- Dumping data for table `node`
 --

@@ -6,10 +6,6 @@
       {
         "id": "00000001",
         "name": "ISP_CONNECTION"
-      },
-      {
-        "id": "00000002",
-        "name": "CP_CONTROL"
       }
     ],
     "VNFs": [
@@ -124,30 +120,6 @@
           "actions": [
             {
               "output_to_port": "vnf:00000001:L2Port:2"
-            }
-          ]
-        },
-        {
-          "id": "00000007",
-          "priority": 1,
-          "match": {
-            "port_in": "vnf:00000002:inout:1"
-          },
-          "actions": [
-            {
-              "output_to_port": "endpoint:00000002"
-            }
-          ]
-        },
-        {
-          "id": "00000008",
-          "priority": 1,
-          "match": {
-            "port_in": "endpoint:00000002"
-          },
-          "actions": [
-            {
-              "output_to_port": "vnf:00000002:inout:1"
             }
           ]
         }

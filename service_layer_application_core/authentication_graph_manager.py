@@ -73,7 +73,7 @@ class AuthGraphManager:
             nffg = NFFG_Manager.getNF_FGFromFile('authentication_graph.json')
 
             # prepare the captive portal control end point
-            self._prepare_cp_control_end_point(nffg, domain_info)
+            # self._prepare_cp_control_end_point(nffg, domain_info)
             # prepare the end point to isp
             self._prepare_egress_end_point(nffg)
 

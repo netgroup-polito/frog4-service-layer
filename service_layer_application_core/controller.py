@@ -121,10 +121,10 @@ class ServiceLayerController:
                 Graph().delete_session(session.id)
                 Session().delete_user_devices_for_session(session.id)
 
-            logging.debug('Deleted profile of user \"'+self.user_data.username+'\"')
+            logging.debug('Deleted profile of user "'+self.user_data.username+'"')
             print('Deleted profile of user "' + self.user_data.username + '"')
 
-            # Set the field ended in the table session to the actual datatime
+            # Set the field ended in the table session to the actual data time
             Session().set_ended(session.id)
         else:
             logging.debug('Delete access for specific device')
