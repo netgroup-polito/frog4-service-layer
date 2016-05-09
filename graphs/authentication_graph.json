@@ -32,9 +32,6 @@
         "ports": [
           {
             "id": "inout:0"
-          },
-          {
-            "id": "inout:1"
           }
         ]
       },
