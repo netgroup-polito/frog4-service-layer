@@ -238,9 +238,13 @@ class ServiceLayerController:
 
             # set the domain in root if available in endpoint
             if device_endpoint_id is not None:
-                domain_name = EndPointDB.get_end_point(nffg.getEndPoint(device_endpoint_id).db_id).domain_name
-                domain_type = Domain.get_domain_from_name(domain_name).type
-                if domain_name is not None and domain_type in VNF_AWARE_DOMAINS:
+                logging.info("Detecting the right domain for the user graph")
+                logging.debug("device_endpoint_id: " + device_endpoint_id)
+                ep_domain_name = EndPointDB.get_end_point(nffg.getEndPoint(device_endpoint_id).db_id).domain_name
+                logging.debug("domain_name " + ep_domain_name)
+                domain_type = Domain.get_domain_from_name(ep_domain_name).type
+                logging.debug("domain_type " + domain_type)
+                if ep_domain_name is not None and domain_type in VNF_AWARE_DOMAINS:
                     nffg.domain = EndPointDB.get_end_point(nffg.getEndPoint(device_endpoint_id).db_id).domain_name
 
             # clone the nffg into a service_graph before to start lowering, so we can add it into db if success
