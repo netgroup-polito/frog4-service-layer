@@ -1,11 +1,22 @@
-# Service Layer installation guide (Tested on ubuntu 14.04.1)
+# Service Layer installation guide (Tested on ubuntu 14.04.1 and Debian stretch-testing)
 
-- Required ubuntu packages:
+- Required packages
+    First of all, install required packages from your distribution repositories:
+        sudo apt-get install python3-dev python3-setuptools python3-pip python3-sqlalchemy libmysqlclient-dev
+        sudo pip3 install --upgrade falcon requests gunicorn jsonschema pymysql
+
+- DoubleDecker
+    The frog4-service-layer uses the [DoubleDecker](https://github.com/Acreo/DoubleDecker) messaging system to recieve informations from below domains. In order to launch the frog4-service-layer you need to install DoubleDecker.
+    Install the python version of the client required to run the service layer cloning the repository and following the istructions provied:
+        git clone https://github.com/Acreo/DoubleDecker-py
+    If you need to run the broker too, you have to install the C version of Double Decker, from the following repository:
+        git clone https://github.com/Acreo/DoubleDecker
     
-        sudo apt-get install python-dev python-setuptools
-        sudo easy_install pip
-        sudo apt-get install python-sqlalchemy libmysqlclient-dev
-        sudo pip install --upgrade cython falcon requests gunicorn jsonschema mysql-python json_hyper_schema
+- Clone this repository
+    Now you have to clone this repository and all the submodules. Submodules include components that are part of the service layer but that are being developed in different repositories. This lead to the necessity to clone them as well in the right folders, under the FROG4 service layer root. For this, please follow the steps below:
+        git clone https://github.com/netgroup-polito/frog4-service-layer
+        cd frog4-service-layer
+        git submodule init && git submodule update
     
 - Create database
     - Create database and user for service layer database:
@@ -21,22 +32,24 @@
             cd frog-service-layer
             mysql -u service_layer -p service_layer < db.sql
 
-    - Change the db connection in configuration/service_layer.conf:
+- Configuration
+    Configuration parameters are stored in [config/default-config.ini](config/default-config.ini); you can copy this file to set up your custom configuration of the service layer.
 
-            [db]
-            # Mysql DB
-            connection = mysql://service_layer:SL_DBPASS@127.0.0.1/service_layer
+    - Change the db connection:
+
+        [db]
+        # Mysql DB
+        connection = mysql+pymysql://service_layer:SL_DBPASS@127.0.0.1/service_layer
     
     - Change the orchestrator endpoint:
-            
-            [orchestrator]
-            port = ORCH_PORT
-            ip = ORCH_IP
+     
+        [orchestrator]
+        port = ORCH_PORT
+        ip = ORCH_IP
         
-    - Change templates inside the "templates" directory with right information
-    
-    - Associate for each user in the DB a service graph (for this step could be useful to install phpmyadmin)
-        - Insert a row in the table user
+    - Associate for each user in the DB a service graph:
+        - Copy the json of the user service graph in [graphs](graphs) folder;
+        - Insert/edit a row in the table user, specifying the file name of the graph in the 'service_graph' column.
 
 - Run the service layer
         
