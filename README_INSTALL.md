@@ -49,7 +49,7 @@ Configuration parameters are stored in [config/default-config.ini](config/defaul
         connection = mysql+pymysql://service_layer:SL_DBPASS@127.0.0.1/service_layer
 
 - Change the orchestrator endpoint:
-
+        
         [orchestrator]
         port = ORCH_PORT
         ip = ORCH_IP
@@ -59,5 +59,6 @@ Configuration parameters are stored in [config/default-config.ini](config/defaul
     - Insert/edit a row in the table user, specifying the file name of the graph in the 'service_graph' column.
 
 #### Run the service layer
-        
-    ./start_service_layer.sh
+You can launch the service layer by executing the following script in the root folder, optionally specifying your own configuration file (example: conf/config.ini):
+
+        ./start_service_layer.sh [-d conf_file]

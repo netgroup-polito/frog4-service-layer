@@ -11,8 +11,6 @@ import argparse
 
 from threading import Thread
 
-import falcon
-
 from service_layer_application_core.config import Configuration
 from service_layer_application_core.dd_client import DDClient
 

@@ -1,3 +1,5 @@
+import argparse
+
 from subprocess import call
 from service_layer_application_core.config import Configuration
 
@@ -5,7 +7,7 @@ from service_layer_application_core.config import Configuration
 parser = argparse.ArgumentParser()
 parser.add_argument(
       '-d',
-      "--conf-file",
+      "--conf_file",
       nargs='?',
       help='Configuration file'
 )
@@ -13,8 +15,8 @@ parser.add_argument(
 args = parser.parse_args()
 
 # set configuration file
-if args.file:
-  Configuration.config_file = args.file
+if args.conf_file:
+    Configuration.config_file = args.conf_file
 
 conf = Configuration()
 ip = conf.SERVICE_LAYER_IP
