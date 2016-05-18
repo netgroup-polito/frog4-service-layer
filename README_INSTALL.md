@@ -30,28 +30,29 @@ The FROG4 service-layer uses a local mySQL database that has to be created and i
 
 - Create database and user for service layer database:
     
-    mysql -u root -p
-    mysql> CREATE DATABASE service_layer;
-    mysql> GRANT ALL PRIVILEGES ON service_layer.* TO 'service_layer'@'localhost' IDENTIFIED BY 'SL_DBPASS';
-    mysql> GRANT ALL PRIVILEGES ON service_layer.* TO 'service_layer'@'%' IDENTIFIED BY 'SL_DBPASS';    
-    mysql> exit;
+        mysql -u root -p
+        mysql> CREATE DATABASE service_layer;
+        mysql> GRANT ALL PRIVILEGES ON service_layer.* TO 'service_layer'@'localhost' IDENTIFIED BY 'SL_DBPASS';
+        mysql> GRANT ALL PRIVILEGES ON service_layer.* TO 'service_layer'@'%' IDENTIFIED BY 'SL_DBPASS';    
+        mysql> exit;
     
 - Create tables in the service_layer db:
     
-    cd frog-service-layer
-    mysql -u service_layer -p service_layer < db.sql
+        cd frog-service-layer
+        mysql -u service_layer -p service_layer < db.sql
 
 #### Configuration
 Configuration parameters are stored in [config/default-config.ini](config/default-config.ini); you can copy this file to set up your custom configuration of the service layer.
 - Change the db connection:
-    [db]
-    # Mysql DB
-    connection = mysql+pymysql://service_layer:SL_DBPASS@127.0.0.1/service_layer
+
+        [db]
+        connection = mysql+pymysql://service_layer:SL_DBPASS@127.0.0.1/service_layer
 
 - Change the orchestrator endpoint:
-    [orchestrator]
-    port = ORCH_PORT
-    ip = ORCH_IP
+
+        [orchestrator]
+        port = ORCH_PORT
+        ip = ORCH_IP
     
 - Associate for each user in the DB a service graph:
     - Copy the json of the user service graph in [graphs](graphs) folder;
