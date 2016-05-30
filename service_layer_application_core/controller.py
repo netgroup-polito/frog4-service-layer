@@ -15,13 +15,12 @@ from service_layer_application_core.sql.domain import Domain
 from service_layer_application_core.sql.end_point import EndPointDB
 from service_layer_application_core.sql.graph import Graph
 from service_layer_application_core.sql.session import Session, UserDeviceModel
-from service_layer_application_core.sql.user import User, UserModel
+from service_layer_application_core.sql.user import User
 from nffg_library.nffg import NF_FG
 from service_layer_application_core.nffg_manager import NFFG_Manager
 from service_layer_application_core.common.user_session import UserSession
 from service_layer_application_core.common.endpoint import Endpoint
 from service_layer_application_core.orchestrator_rest import GlobalOrchestrator
-from service_layer_application_core.user_authentication import UserData
 from service_layer_application_core.exception import SessionNotFound, ISPNotDeployed, GraphNotFound
 
 ISP = Configuration().ISP
@@ -237,7 +236,7 @@ class ServiceLayerController:
             Session().inizializeSession(session_id, self.user_data.getUserID(), nffg.id, nffg.name)
 
             # set the domain in root if available in endpoint
-            if device_endpoint_id is not None:
+            if device_endpoint_id is not None and domain_name is None:
                 logging.info("Detecting the right domain for the user graph")
                 logging.debug("device_endpoint_id: " + device_endpoint_id)
                 ep_domain_name = EndPointDB.get_end_point(nffg.getEndPoint(device_endpoint_id).db_id).domain_name

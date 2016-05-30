@@ -14,14 +14,14 @@ from service_layer_application_core.sql.end_point import EndPointDB
 from service_layer_application_core.sql.graph import Graph
 from service_layer_application_core.sql.session import Session
 from service_layer_application_core.sql.user import User
-from service_layer_application_core.sql.domain import Domain
 from service_layer_application_core.user_authentication import UserData
-from nffg_library.nffg import NF_FG, EndPoint, FlowRule, Port, Match, Action
+from nffg_library.nffg import NF_FG
 
 from .domain_info import DomainInfo
 
 VNF_AWARE_DOMAINS = Configuration().VNF_AWARE_DOMAINS
 EGRESS_TYPE = Configuration().EGRESS_TYPE
+
 
 class ISPGraphManager:
     orchestrator_ip = Configuration().ORCH_IP
@@ -150,7 +150,6 @@ class ISPGraphManager:
         :type domain_info: DomainInfo
         :return:
         """
-        ingress_interface_name = None
 
         if domain_info is not None:
             domain_name = domain_info.name
