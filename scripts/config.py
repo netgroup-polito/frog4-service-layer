@@ -27,7 +27,7 @@ class Configuration(object):
     def inizialize(self):
         config = configparser.RawConfigParser()
         base_folder = os.path.realpath(os.path.abspath(os.path.split(inspect.getfile( inspect.currentframe() ))[0])).rpartition('/')[0]
-        config.read(base_folder+'/config/demo_frog4.ini')
+        config.read(base_folder+'/config/default-config.ini')
         self._DD_CUSTOMER = config.get('doubledecker', 'dd_customer')
         self._BROKER_ADDRESS = config.get('doubledecker', 'broker_address')
         self._DD_KEYFILE = config.get('doubledecker', 'dd_keyfile')
