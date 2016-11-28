@@ -36,7 +36,7 @@ class Configuration(object, metaclass=Singleton):
             os.path.abspath(os.path.split(inspect.getfile(inspect.currentframe()))[0])
         ).rpartition('/')[0]
         config.read(base_folder + '/' + self.conf_file)
-        print(self.conf_file)
+
         self._LOG_FILE = config.get('log', 'log_file')
         self._VERBOSE = config.getboolean('log', 'verbose')
         self._DEBUG = config.getboolean('log', 'debug')
