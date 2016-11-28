@@ -10,28 +10,33 @@ import json
 import os
 
 
-class Configuration(object):
-    _instance = None
-    _AUTH_SERVER = None
-    config_file = 'config/default-config.ini'
+class Singleton(type):
+    _instances = {}
 
-    def __new__(cls, *args, **kwargs):
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
 
-        if not cls._instance:
-            cls._instance = super(Configuration, cls).__new__(
-                cls, *args, **kwargs)
-        return cls._instance
+
+class Configuration(object, metaclass=Singleton):
 
     def __init__(self):
-        if self._AUTH_SERVER is None:
-            self.inizialize()
+        if os.getenv("FROG4_SL_CONF") is not None:
+            self.conf_file = os.environ["FROG4_SL_CONF"]
+        else:
+            self.conf_file = "config/default-config.ini"
 
-    def inizialize(self):
+        self.initialize()
+
+    def initialize(self):
 
         config = configparser.RawConfigParser()
-        base_folder = \
-        os.path.realpath(os.path.abspath(os.path.split(inspect.getfile(inspect.currentframe()))[0])).rpartition('/')[0]
-        config.read(base_folder + '/' + Configuration.config_file)
+        base_folder = os.path.realpath(
+            os.path.abspath(os.path.split(inspect.getfile(inspect.currentframe()))[0])
+        ).rpartition('/')[0]
+        config.read(base_folder + '/' + self.conf_file)
+        print(self.conf_file)
         self._LOG_FILE = config.get('log', 'log_file')
         self._VERBOSE = config.getboolean('log', 'verbose')
         self._DEBUG = config.getboolean('log', 'debug')

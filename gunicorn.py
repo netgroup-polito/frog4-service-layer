@@ -1,3 +1,4 @@
+import os
 import argparse
 
 from subprocess import call
@@ -16,7 +17,7 @@ args = parser.parse_args()
 
 # set configuration file
 if args.conf_file:
-    Configuration.config_file = args.conf_file
+    os.environ.setdefault("FROG4_SL_CONF", args.conf_file)
 
 conf = Configuration()
 ip = conf.SERVICE_LAYER_IP
