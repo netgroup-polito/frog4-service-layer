@@ -1,0 +1,52 @@
+<?xml version="1.0" ?>
+<virtualizer>
+	<id>SingleBiSBiS-NFFG</id>
+	<name>Single-BiSBiS-View</name>
+	<nodes>
+		<node>
+			<id>SingleBiSBiS</id>
+			<NF_instances>
+				<node operation="create">
+					<id>1</id>
+					<name>prova</name>
+					<type>cirros</type>
+					<ports>
+						<port>
+						<id>1</id>
+							<name>ovs1_eth0</name>
+							<port-type>port-sap</port-type>
+						</port>
+					</ports>
+					<resources>
+						<cpu>1.0</cpu>
+						<mem>1.0</mem>
+						<storage>0.0</storage>
+					</resources>
+				</node>
+				</NF_instances>
+				<flowtable>
+				<flowentry operation="create">
+					<id>1</id>
+					<priority>100</priority>
+					<port>../../../NF_instances/node[id=1]/ports/port[id=1]</port>
+					<out>/virtualizer/nodes/node[id=SingleBiSBiS]/ports/port[id=port-sap1]</out>
+					<resources>
+						<bandwidth>0</bandwidth>
+					</resources>
+				</flowentry>
+				
+				<flowentry operation="create">
+					<id>2</id>
+					<priority>100</priority>
+					<port>/virtualizer/nodes/node[id=SingleBiSBiS]/ports/port[id=port-sap1]</port>
+					<out>../../../NF_instances/node[id=1]/ports/port[id=1]</out>
+					<resources>
+						<bandwidth>0</bandwidth>
+					</resources>
+					</flowentry>
+					</flowtable>
+		</node>
+	</nodes>
+	<version>2016-07-08; compiled at 2016-10-12  13:43:31</version>
+	</virtualizer>
+

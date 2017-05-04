@@ -13,7 +13,7 @@ import inspect
 from threading import Thread
 from service_layer_application_core.config import Configuration
 from service_layer_application_core.service_layer_application import ServiceLayer
-from service_layer_application_core.dd_client import DDClient
+#from service_layer_application_core.dd_client import DDClient
 
 conf = Configuration()
 
@@ -45,7 +45,7 @@ app.add_route('/service-layer', serviceLayer)
 app.add_route('/service-layer/{mac_address}', serviceLayer)
 
 logging.info("Falcon Successfully started")
-
+"""
 # start the dd client to receive information about domains
 base_folder = os.path.realpath(os.path.abspath(os.path.split(inspect.getfile(inspect.currentframe()))[0]))
 dd_client = DDClient(conf.DD_NAME, conf.BROKER_ADDRESS, conf.DD_CUSTOMER, conf.DD_KEYFILE)
@@ -53,3 +53,4 @@ thread = Thread(target=dd_client.start)
 thread.start()
 
 logging.info("DoubleDecker Client Successfully started")
+"""

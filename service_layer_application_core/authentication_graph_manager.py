@@ -3,24 +3,26 @@ Created on Apr 14, 2016
 
 @author: gabrielecastellano
 """
-import json
+#import json
 import logging
+
 
 from service_layer_application_core.common.user_session import UserSession
 from service_layer_application_core.config import Configuration
 from service_layer_application_core.controller import ServiceLayerController
-from service_layer_application_core.nffg_manager import NFFG_Manager
+#from service_layer_application_core.nffg_manager import NFFG_Manager
 from service_layer_application_core.orchestrator_rest import GlobalOrchestrator
-from service_layer_application_core.sql.end_point import EndPointDB
-from service_layer_application_core.sql.graph import Graph
+#from service_layer_application_core.sql.end_point import EndPointDB
+#from service_layer_application_core.sql.graph import Graph
 from service_layer_application_core.sql.session import Session
 from service_layer_application_core.sql.user import User
-from service_layer_application_core.sql.domain import Domain
+#from service_layer_application_core.sql.domain import Domain
 from service_layer_application_core.user_authentication import UserData
-from service_layer_application_core.isp_graph_manager import ISPGraphManager
-from nffg_library.nffg import NF_FG, EndPoint, FlowRule, Port, Match, Action
+#from service_layer_application_core.isp_graph_manager import ISPGraphManager
+#from nffg_library.nffg import NF_FG, EndPoint, FlowRule, Port, Match, Action
+from virtualizer_library.virtualizer import ET, Virtualizer,  Software_resource, Infra_node, Port as Virt_Port
 
-from .domain_info import DomainInfo
+#from .domain_info import DomainInfo
 
 
 CAPTIVE_PORTAL_IP = Configuration().CAPTIVE_PORTAL_IP
@@ -38,17 +40,17 @@ class AuthGraphManager:
     orchestrator_port = Configuration().ORCH_PORT
 
     def __init__(self):
-        # self.graph_instantiated = False
+        self.graph_instantiated = False
         admin_model = User().getUser(Configuration().ADMIN_NAME)
         self.admin_id = admin_model.id
         self.admin_name = admin_model.name
         self.admin_password = admin_model.password
         self.admin_tenant = User().getTenantName(admin_model.tenant_id)
-        self.current_domain_id = None
+        #self.current_domain_id = None
         # get current instance of authentication service-graph
-        if Session().checkSession(self.admin_id):
-            session_id = Session().get_active_user_session(self.admin_id).id
-            self.current_domain_id = Graph().get_last_graph(session_id).domain_id
+        #if Session().checkSession(self.admin_id):
+         #   session_id = Session().get_active_user_session(self.admin_id).id
+         #   self.current_domain_id = Graph().get_last_graph(session_id).domain_id
 
     def instantiate_auth_graph(self, domain_info=None):
         """
@@ -60,36 +62,50 @@ class AuthGraphManager:
         :type domain_info: DomainInfo
         """
 
-        if domain_info is not None:
-            domain_name = domain_info.name
-            logging.debug("Trying to instantiate the authentication graph on domain '" + domain_info.name + "'...")
-        else:
-            domain_name = None
-            logging.debug("Trying to instantiate the authentication graph on the default domain...")
+        #if domain_info is not None:
+        #    domain_name = domain_info.name
+        #    logging.debug("Trying to instantiate the authentication graph on domain '" + domain_info.name + "'...")
+        #else:
+        domain_name = None
+        logging.debug("Trying to instantiate the authentication graph on the default domain")
 
-        if (domain_info is None) or (domain_info.type in VNF_AWARE_DOMAINS):
+        if (domain_name is None):
 
             # get the authentication graph
-            nffg = NFFG_Manager.getNF_FGFromFile('authentication_graph.json')
-
+            #nffg = NFFG_Manager.getNF_FGFromFile('authentication_graph.json')
+            nffg_file = './graphs/authentication_graph.xml'
+            logging.debug("Reading authentication graph file: %s", nffg_file)
+            logging.debug(nffg_file)
+            try:
+                tmpFile = open(nffg_file, "r")
+                escapeNffg = tmpFile.read()
+                logging.debug(escapeNffg)
+                tmpFile.close()
+            except IOError as e:
+                print("Failed to read authentication graph.")
+                logging.error("Failed to read authentication graph.")
+                logging.exception(e)
             # prepare the captive portal control end point
             # self._prepare_cp_control_end_point(nffg, domain_info)
             # prepare the end point to isp
-            self._prepare_egress_end_point(nffg)
+            #self._prepare_egress_end_point(nffg)
 
             # send to controller
             try:
                 user_data = UserData(self.admin_name, self.admin_password, self.admin_tenant)
+                #Create a new controller instance to send the auth_graph to the MdO
                 controller = ServiceLayerController(user_data)
-                controller.put(domain_name=domain_name, nffg=nffg)
+                controller.put(nffg=escapeNffg)
                 logging.info("Authentication graph correctly instantiated")
                 print("Authentication graph instantiated")
+                '''
                 if domain_name is not None:
                     self.current_domain_id = domain_info.domain_id
                 else:
                     # TODO this is wronged, i should ask to the orchestrator
                     session_id = Session().get_active_user_session(self.admin_id).id
                     self.current_domain_id = Graph().get_last_graph(session_id).domain_id
+                '''
             except Exception as err:
                 print("Failed to instantiate authentication graph.")
                 logging.error("Failed to instantiate authentication graph.")

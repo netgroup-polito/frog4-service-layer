@@ -4,7 +4,7 @@ Created on Oct 1, 2014
 @author: fabiomignini
 @author: gabrielecastellano
 """
-import configparser
+import ConfigParser as configparser
 import inspect
 import json
 import os
@@ -19,8 +19,9 @@ class Singleton(type):
         return cls._instances[cls]
 
 
-class Configuration(object, metaclass=Singleton):
+class Configuration(object):
 
+    __metaclass__ = Singleton
     def __init__(self):
         if os.getenv("FROG4_SL_CONF") is not None:
             self.conf_file = os.environ["FROG4_SL_CONF"]

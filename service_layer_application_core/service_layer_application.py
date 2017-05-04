@@ -6,23 +6,23 @@ Created on Oct 1, 2014
 import requests
 import falcon
 import json
-import jsonschema
+#import jsonschema
 import logging
 
 from sqlalchemy.orm.exc import NoResultFound
 
-from nffg_library.nffg import EndPoint
+#from nffg_library.nffg import EndPoint
 from service_layer_application_core.authentication_graph_manager import AuthGraphManager
 from service_layer_application_core.client_graph_manager import ClientGraphManager
-from service_layer_application_core.nffg_manager import NFFG_Manager
+#from service_layer_application_core.nffg_manager import NFFG_Manager
 from service_layer_application_core.sql.user import User
 from service_layer_application_core.user_authentication import UserAuthentication
 from service_layer_application_core.exception import SessionNotFound, UnauthorizedRequest, RequestValidationError, \
     GraphNotFound
 from service_layer_application_core.controller import ServiceLayerController
-from service_layer_application_core.validate_request import RequestValidator
+#from service_layer_application_core.validate_request import RequestValidator
 
-from json.decoder import JSONDecodeError
+#from json.decoder import JSONDecodeError
 
 
 class ServiceLayer(object):
@@ -30,15 +30,22 @@ class ServiceLayer(object):
     ServiceLayer class that intercept the REST call through the WSGI server
     It allows the user to manage his own graph through a REST web service.
     """
-
-    def on_delete(self, request, response, mac_address=None):
+    def __init__(self):
         """
+        Launch the authentication graph, to start up the captive portal and set up the first path.
+        """
+        authentication_graph = AuthGraphManager()
+        authentication_graph.instantiate_auth_graph(self)
+        logging.debug("Authentication graph started")
+    """
+    def on_delete(self, request, response, mac_address=None):
+        
         De-instantiate the NF-FG of the user, or update it by removing a mac rule
 
         :param request: HTTP GET request containing user credential as headers (X-Auth-User, X-Auth-Pass, X-Auth-Tenant)
         :param response: HTTP response code
         :param mac_address: if specified, only the rule relative to this mac will be erased
-        """
+        
         try:
             user_data = UserAuthentication().authenticateUserFromRESTRequest(request)
             graph_manager = ClientGraphManager(user_data)
@@ -80,6 +87,7 @@ class ServiceLayer(object):
         except Exception as err:
             logging.exception(err)
             raise falcon.HTTPInternalServerError('Contact the admin. ', str(err))
+    """
 
     def on_put(self, request, response):
         """
@@ -99,8 +107,8 @@ class ServiceLayer(object):
             logging.debug("Authenticated user: " + user_data.username)
             # Now, it initialize a new controller instance to handle the request
             controller = ServiceLayerController(user_data)
-            request_dict = json.loads(request.stream.read().decode())
-            RequestValidator.validate(request_dict)
+            #request_dict = json.loads(request.stream.read().decode())
+            #RequestValidator.validate(request_dict)
             if 'device' in request_dict['session']:
                 # add a new endpoint to the graph for this device if it came from a new port
                 graph_manager = ClientGraphManager(user_data)

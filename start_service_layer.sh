@@ -1,3 +1,3 @@
 #!/bin/bash
 echo "" > FrogServiceLayer.log
-python3 gunicorn.py "$@"
+python gunicorn.py "$@"

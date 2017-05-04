@@ -9,19 +9,23 @@ import json
 import falcon
 import logging
 import uuid
+import xml.etree.ElementTree as ET
 
 from service_layer_application_core.config import Configuration
-from service_layer_application_core.sql.domain import Domain
-from service_layer_application_core.sql.end_point import EndPointDB
+#from service_layer_application_core.sql.domain import Domain
+#from service_layer_application_core.sql.end_point import EndPointDB
 from service_layer_application_core.sql.graph import Graph
 from service_layer_application_core.sql.session import Session, UserDeviceModel
 from service_layer_application_core.sql.user import User
-from nffg_library.nffg import NF_FG
-from service_layer_application_core.nffg_manager import NFFG_Manager
+#from nffg_library.nffg import NF_FG
+#from service_layer_application_core.nffg_manager import NFFG_Manager
 from service_layer_application_core.common.user_session import UserSession
-from service_layer_application_core.common.endpoint import Endpoint
+#from service_layer_application_core.common.endpoint import Endpoint
 from service_layer_application_core.orchestrator_rest import GlobalOrchestrator
 from service_layer_application_core.exception import SessionNotFound, ISPNotDeployed, GraphNotFound
+
+from virtualizer_library.virtualizer import Virtualizer,  Software_resource, Infra_node, Port as Virt_Port
+
 
 ISP = Configuration().ISP
 ISP_USERNAME = Configuration().ISP_USERNAME
@@ -50,7 +54,8 @@ class ServiceLayerController:
 
     def __init__(self, user_data):
         self.user_data = user_data
-        self.orchestrator = GlobalOrchestrator(self.user_data, self.orchestrator_ip, self.orchestrator_port)
+        #self.orchestrator = GlobalOrchestrator(self.user_data, self.orchestrator_ip, self.orchestrator_port)
+        self.orchestrator = GlobalOrchestrator(self.orchestrator_ip, self.orchestrator_port)
 
     def get(self):
 
@@ -158,7 +163,7 @@ class ServiceLayerController:
 
             logging.debug('Device deleted "'+mac_address+'" of user "'+self.user_data.username+'"')
             print('Device deleted "' + mac_address + '" of user "' + self.user_data.username + '"')
-
+    
     def put(self, mac_address=None, device_endpoint_id=None, domain_name=None, nffg=None):
         """
 
@@ -169,7 +174,7 @@ class ServiceLayerController:
         :type mac_address: str
         :type device_endpoint_id: str
         :type domain_name: str
-        :type nffg: NF_FG
+        :type nffg: escapeNffg
         :return:
         """
 
@@ -184,8 +189,10 @@ class ServiceLayerController:
         if domain_name is not None:
             nffg.domain = domain_name
 
-        # Check if the user have an active session
-        if UserSession(self.user_data.getUserID(), self.user_data).checkSession(nffg.id, self.orchestrator) is True:
+        # Check if the user have an active session TODO: da rivedere la condizione, devo aggiungere un flag di loggato al db
+        #if UserSession(self.user_data.getUserID(), self.user_data).checkSession(nffg.id, self.orchestrator) is True:
+        flag=None
+        if flag is not None:
             # Existent session for this user
             logging.debug('The FG for this user is already instantiated, the FG will be updated if it has been modified')
 
@@ -233,9 +240,32 @@ class ServiceLayerController:
             logging.debug('The FG for this user is not yet instantiated')
             logging.debug('Instantiate profile')
             session_id = uuid.uuid4().hex
-            Session().inizializeSession(session_id, self.user_data.getUserID(), nffg.id, nffg.name)
+            if nffg is not None:
+                try:
+                    tree = ET.ElementTree(ET.fromstring(nffg))
+                    logging.debug("1--> %s", tree)
+                    logging.debug("2--> %s", tree.getroot())
+                    logging.debug("3--> %s %s", tree.getroot().tag, tree.getroot().attrib)
+                    root = tree.getroot()
+                    for child in root.findall("nodes"):
+                        logging.debug("%s %s", child.tag, child.attrib)
+                except ET.ParseError as e:
+                    print('ParseError: %s' % e.message)
+                    raise ServerError("ParseError: %s" % e.message)
+                newInfrastructure = Virtualizer.parse(root=root)
+	        newFlowtable = newInfrastructure.nodes.node['UUID11'].flowtable
+	        newNfInstances = newInfrastructure.nodes.node['UUID11'].NF_instances
+                for child in newNfInstances:
+                    graph_id = child.id.get_value()
+                    graph_name = child.name.get_value()
+                logging.debug("Istanza grafo %s -- %s", graph_id, graph_name)
+                #couple = self.getIDName(root)
+                logging.debug("Istanza grafo %s -- %s", graph_id, graph_name)
+                #TODO eliminare il commento alla initialize session finito il debug. Bisogna anche tenere traccia degli id delle flowrule quando l'utente fa il logout
+                #Session().inizializeSession(session_id, self.user_data.getUserID(), graph_id, graph_name)
 
-            # set the domain in root if available in endpoint
+            # set the domain in root if available in endpoint (in this case device_endpoint is always none. Francesco)
+            """
             if device_endpoint_id is not None and domain_name is None:
                 logging.info("Detecting the right domain for the user graph")
                 logging.debug("device_endpoint_id: " + device_endpoint_id)
@@ -247,23 +277,26 @@ class ServiceLayerController:
                     nffg.domain = EndPointDB.get_end_point(nffg.getEndPoint(device_endpoint_id).db_id).domain_name
 
             # clone the nffg into a service_graph before to start lowering, so we can add it into db if success
-            sl_nffg = NF_FG()
-            sl_nffg.parseDict(nffg.getDict(extended=True, domain=True))
+            #sl_nffg = NF_FG()
+            #sl_nffg.parseDict(nffg.getDict(extended=True, domain=True))
 
             # Manage profile
-            logging.debug("User service graph: "+nffg.getJSON(domain=True))
-            self.prepareProfile(mac_address, device_endpoint_id, nffg)
+            #logging.debug("User service graph: "+nffg.getJSON(domain=True))
+            """
+            # Prepare profile deve essere modificata, ma non viene chiamata se il grafo e' quello di autenticazione
+            if device_endpoint_id is not None:
+                self.prepareProfile(mac_address, device_endpoint_id, nffg)
 
             # Call orchestrator to instantiate NF-FG
-            logging.debug('Calling orchestrator sending NF-FG: '+nffg.getJSON(domain=True))
+            logging.debug('Calling orchestrator sending NF-FG')
             print("Calling orchestrator to instantiate '"+self.user_data.username+"' forwarding graph.")
             if DEBUG_MODE is False:
                 try:
                     self.orchestrator.put(nffg)
                     # add the service graph to db
-                    graph_db_id = Graph().add_graph(sl_nffg, session_id)
-                    if domain_name is not None:
-                        Graph.set_domain_id(graph_db_id, Domain.get_domain_from_name(domain_name).id)
+                    #graph_db_id = Graph().add_graph(sl_nffg, session_id)
+                    #if domain_name is not None:
+                    #    Graph.set_domain_id(graph_db_id, Domain.get_domain_from_name(domain_name).id)
                     logging.debug("Profile instantiated for user '"+self.user_data.username+"'")
                     print("Profile instantiated for user '"+self.user_data.username+"'")
                 except Exception as err:
@@ -275,11 +308,11 @@ class ServiceLayerController:
                     raise err
             else:
                 # debug mode
-                graph_db_id = Graph().add_graph(sl_nffg, session_id)
-                if domain_name is not None:
-                    Graph.set_domain_id(graph_db_id, Domain.get_domain_from_name(domain_name).id)
+                #graph_db_id = Graph().add_graph(sl_nffg, session_id)
+                #if domain_name is not None:
+                #    Graph.set_domain_id(graph_db_id, Domain.get_domain_from_name(domain_name).id)
                 logging.debug("Profile instantiated for user '"+self.user_data.username+"'")
-                print("Profile instantiated for user '"+self.user_data.username+"'")
+                print("Graph "+ graph_name  + " instantiated for user '"+self.user_data.username+"'")
 
         # Set mac address in the session
         if mac_address is not None:
