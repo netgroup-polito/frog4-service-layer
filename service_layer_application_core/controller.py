@@ -164,7 +164,7 @@ class ServiceLayerController:
             logging.debug('Device deleted "'+mac_address+'" of user "'+self.user_data.username+'"')
             print('Device deleted "' + mac_address + '" of user "' + self.user_data.username + '"')
     
-    def put(self, mac_address=None, device_endpoint_id=None, domain_name=None, nffg=None):
+    def put(self, mac_address=None, is_user=False, domain_name=None, nffg=None):
         """
 
         :param mac_address:
@@ -188,56 +188,64 @@ class ServiceLayerController:
         # if domain is specified, label the nffg with it
         if domain_name is not None:
             nffg.domain = domain_name
-
         # Check if the user have an active session TODO: da rivedere la condizione, devo aggiungere un flag di loggato al db
         #if UserSession(self.user_data.getUserID(), self.user_data).checkSession(nffg.id, self.orchestrator) is True:
-        flag=None
-        if flag is not None:
-            # Existent session for this user
-            logging.debug('The FG for this user is already instantiated, the FG will be updated if it has been modified')
-
-            session = Session().get_active_user_session_by_nf_fg_id(nffg.id, error_aware=True)
-            session_id = session.id
-            Session().updateStatus(session_id, 'updating')
-
-            # clone the nffg into a service_graph before to start lowering, so we can add it into db if success
-            sl_nffg = NF_FG()
-            sl_nffg.parseDict(nffg.getDict(extended=True, domain=True))
-
-            # Manage new device
-            if Session().checkDeviceSession(self.user_data.getUserID(), mac_address) is True:
-                '''
-                 A rule for this mac address is already implemented,
-                 only an update of the graph is needed
-                 (This update is necessary only if the graph is different from the last instantiated,
-                 but in this moment the graph is always re-instantiated, will be the orchestrator accountable
-                 for a smart update of the FG).
-                '''
-                mac_address = None
-
-            self.addDeviceToNF_FG(mac_address, device_endpoint_id, nffg)
-
-            # Call orchestrator to update NF-FG
-            logging.debug('Call orchestrator sending the following NF-FG: '+nffg.getJSON(domain=True))
-            if DEBUG_MODE is False:
+        if is_user is True:
+            # User graph
+            logging.debug('The FG for this user with this device is not yet instantiated')
+            logging.debug('Instantiate profile')
+            session_id = uuid.uuid4().hex
+            if nffg is not None:
+                # Graph parsing
                 try:
-                    self.orchestrator.put(nffg)
-                    Graph.set_service_graph(Graph.get_last_graph(session_id).id, sl_nffg)
-                except Exception as err:
-                    Session().set_error(session_id)
-                    raise err
-            else:
-                # debug mode
-                Graph.set_service_graph(Graph.get_last_graph(session_id).id, sl_nffg)
-            if mac_address is not None:
-                logging.info("Added device '"+mac_address+"' of user '"+self.user_data.username+"'")
-                print("Added device '"+mac_address+"' of user '"+self.user_data.username+"'")
-            else:
-                logging.info("User profile updated '"+self.user_data.username+"'")
-                print("User profile updated '"+self.user_data.username+"'")
+                    tree = ET.ElementTree(ET.fromstring(nffg))
+                    root = tree.getroot()
+                except ET.ParseError as e:
+                    print('ParseError: %s' % e.message)
+                    raise ServerError("ParseError: %s" % e.message)
+                newInfrastructure = Virtualizer.parse(root=root)
+                newFlowtable = newInfrastructure.nodes.node['SingleBiSBiS'].flowtable
+                newNfInstances = newInfrastructure.nodes.node['SingleBiSBiS'].NF_instances
+                # Modifying the flow rule to set the source mac_address
+                match_string = "ether_type=0x806,dest_mac=" + mac_address
+                logging.debug("Match string = " + match_string)
+                for newflowentry in newFlowtable:
+                    port_path = newflowentry.port.get_value()
+                    logging.debug("Port: " + port_path)
+                    tokens = port_path.split('/')
+                    if tokens[1] == "virtualizer":
+                        newflowentry.match.data = match_string
+                # Call orchestrator to get the actual configuration
+                logging.debug('Calling orchestrator getting actual configuration')
+                mdo_config = self.orchestrator.get()
+                try:
+                    original_tree = ET.ElementTree(ET.fromstring(mdo_config))
+                    original_root = original_tree.getroot()
+                except ET.ParseError as e:
+                    print('ParseError: %s' % e.message)
+                    raise ServerError("ParseError: %s" % e.message)
+                #Parsing of the Mdo original configuration
+                Infrastracture = Virtualizer.parse(root= original_root)
+                Flowtable = Infrastracture.nodes.node['SingleBiSBiS'].flowtable
+                NfInstances = Infrastracture.nodes.node['SingleBiSBiS'].NF_instances
+                #Adding the user graph to the original configuration
+                #TODO valutare se gestire qui la delete quando l'utente fa il logout
+                try:
+                    for instance in newInstances:
+                        NfInstances.add(instance)
+                except KeyError:
+                    raise ClientError("Can't add the instance to the graph")
+                try:
+                    for flowentry in newFlowtable:
+                        Flowtable.add(flowentry)
+                except KeyError:
+                    raise ClientError("Can't add the flowrule to the graph")
+
+
+
         else:
-            # New session for this user
-            logging.debug('The FG for this user is not yet instantiated')
+            # Authentication graph
+            logging.debug('Instantiating the authentication graph')
             logging.debug('Instantiate profile')
             session_id = uuid.uuid4().hex
             if nffg is not None:
@@ -253,13 +261,13 @@ class ServiceLayerController:
                     print('ParseError: %s' % e.message)
                     raise ServerError("ParseError: %s" % e.message)
                 newInfrastructure = Virtualizer.parse(root=root)
-	        newFlowtable = newInfrastructure.nodes.node['UUID11'].flowtable
-	        newNfInstances = newInfrastructure.nodes.node['UUID11'].NF_instances
+	        newFlowtable = newInfrastructure.nodes.node['SingleBiSBiS'].flowtable
+	        newNfInstances = newInfrastructure.nodes.node['SingleBiSBiS'].NF_instances
                 for child in newNfInstances:
                     graph_id = child.id.get_value()
                     graph_name = child.name.get_value()
                 logging.debug("Istanza grafo %s -- %s", graph_id, graph_name)
-                #couple = self.getIDName(root)
+
                 logging.debug("Istanza grafo %s -- %s", graph_id, graph_name)
                 #TODO eliminare il commento alla initialize session finito il debug. Bisogna anche tenere traccia degli id delle flowrule quando l'utente fa il logout
                 #Session().inizializeSession(session_id, self.user_data.getUserID(), graph_id, graph_name)
@@ -282,11 +290,11 @@ class ServiceLayerController:
 
             # Manage profile
             #logging.debug("User service graph: "+nffg.getJSON(domain=True))
-            """
+            
             # Prepare profile deve essere modificata, ma non viene chiamata se il grafo e' quello di autenticazione
             if device_endpoint_id is not None:
                 self.prepareProfile(mac_address, device_endpoint_id, nffg)
-
+            """
             # Call orchestrator to instantiate NF-FG
             logging.debug('Calling orchestrator sending NF-FG')
             print("Calling orchestrator to instantiate '"+self.user_data.username+"' forwarding graph.")
@@ -313,7 +321,7 @@ class ServiceLayerController:
                 #    Graph.set_domain_id(graph_db_id, Domain.get_domain_from_name(domain_name).id)
                 logging.debug("Profile instantiated for user '"+self.user_data.username+"'")
                 print("Graph "+ graph_name  + " instantiated for user '"+self.user_data.username+"'")
-
+        """
         # Set mac address in the session
         if mac_address is not None:
             Session().add_device_in_the_session(
@@ -323,6 +331,7 @@ class ServiceLayerController:
                 session_id
             )
         Session().updateStatus(session_id, 'complete')
+        """
 
     def addDeviceToNF_FG(self, mac_address, device_endpoint_id, nffg):
         # Get MAC addresses from previous session

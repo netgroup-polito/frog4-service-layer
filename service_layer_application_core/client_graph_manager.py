@@ -41,13 +41,12 @@ class ClientGraphManager:
         self.user_tenant = user_data.tenant
         self.user_id = User().getUser(self.user_name).id
         self.current_domain_id = None
-        # get the user service graph instance from db
-        self.nffg = self._get_current_instance()
-        if self.nffg is None:
-            self.nffg = self._get_user_defined_graph()
-            logging.debug("loaded template user graph from file")
-        else:
-            logging.debug("loaded current instance of user graph from database")
+        #get the user service graph instance from db
+        #self.nffg = self._get_current_instance()
+        #if self.nffg is None:
+        #TODO extend the support to multiple device per user-->for now one user and one device per time
+        self.nffg = self._get_user_defined_graph()
+        logging.debug("loaded template user graph from file")
 
     def add_endpoint_from_auth_switch_interface(self, vnf_interface_name):
         """
@@ -196,9 +195,16 @@ class ClientGraphManager:
         nffg_file = User().getServiceGraph(self.user_name)
         if nffg_file is None:
             raise GraphNotFound("No graph defined for the user '" + self.user_name + "'")
-        #Modificare da qui per passare da nffg frog a nffg escape
-        nffg = NFFG_Manager.getNF_FGFromFile(nffg_file)
-        return nffg
+        logging.debug("Graph %s find for the user %s", nffg_file, self.user_name)
+        try:
+            tmpFile = open("graphs/" + nffg_file, "r")
+            escapeNffg = tmpFile.read()
+            tmpFile.close()
+        except IOError as e:
+            print("Failed to read " + nffg_file)
+            logging.error("Failed to read " + nffg_file)
+            logging.exception(e)
+        return escapeNffg
 
     def _get_user_ingress_port(self):
         for vnf in self.nffg.vnfs:

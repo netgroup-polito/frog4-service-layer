@@ -27,7 +27,7 @@ import xml.etree.ElementTree as ET
 import copy
 from decimal import *
 from collections import OrderedDict, Iterable
-from io import StringIO
+from StringIO import StringIO
 import os
 import string
 import logging
