@@ -217,7 +217,15 @@ class ServiceLayerController:
                         newflowentry.match.data = match_string
                 # Call orchestrator to get the actual configuration
                 logging.debug('Calling orchestrator getting actual configuration')
-                mdo_config = self.orchestrator.get()
+                try:
+                    mdo_config = self.orchestrator.getNFFG()
+                    logging.debug('Retrieved configuration: ')
+                    logging.debug(mdo_config)
+                except Exception as err:
+                    logging.exception(err)
+                    Session().set_error(session_id)
+                    logging.debug("Failed to retrieve MdO configuration ")
+                    raise err
                 try:
                     original_tree = ET.ElementTree(ET.fromstring(mdo_config))
                     original_root = original_tree.getroot()
@@ -228,10 +236,16 @@ class ServiceLayerController:
                 Infrastracture = Virtualizer.parse(root= original_root)
                 Flowtable = Infrastracture.nodes.node['SingleBiSBiS'].flowtable
                 NfInstances = Infrastracture.nodes.node['SingleBiSBiS'].NF_instances
+                for child in newNfInstances:
+                    graph_id = child.id.get_value()
+                    graph_name = child.name.get_value()
+                logging.debug("Istanza grafo %s -- %s", graph_id, graph_name)
+
+
                 #Adding the user graph to the original configuration
                 #TODO valutare se gestire qui la delete quando l'utente fa il logout
                 try:
-                    for instance in newInstances:
+                    for instance in newNfInstances:
                         NfInstances.add(instance)
                 except KeyError:
                     raise ClientError("Can't add the instance to the graph")
@@ -240,7 +254,10 @@ class ServiceLayerController:
                         Flowtable.add(flowentry)
                 except KeyError:
                     raise ClientError("Can't add the flowrule to the graph")
-
+                logging.debug("Graph is going to be instantiated:")
+                logging.debug(Infrastracture.xml())
+                #TODO eliminare il commento alla initialize session finito il debug. Bisogna anche tenere traccia degli id delle flowrule quando l'utente fa il logout
+                #Session().inizializeSession(session_id, self.user_data.getUserID(), graph_id, graph_name)
 
 
         else:
@@ -272,55 +289,28 @@ class ServiceLayerController:
                 #TODO eliminare il commento alla initialize session finito il debug. Bisogna anche tenere traccia degli id delle flowrule quando l'utente fa il logout
                 #Session().inizializeSession(session_id, self.user_data.getUserID(), graph_id, graph_name)
 
-            # set the domain in root if available in endpoint (in this case device_endpoint is always none. Francesco)
-            """
-            if device_endpoint_id is not None and domain_name is None:
-                logging.info("Detecting the right domain for the user graph")
-                logging.debug("device_endpoint_id: " + device_endpoint_id)
-                ep_domain_name = EndPointDB.get_end_point(nffg.getEndPoint(device_endpoint_id).db_id).domain_name
-                logging.debug("domain_name " + ep_domain_name)
-                domain_type = Domain.get_domain_from_name(ep_domain_name).type
-                logging.debug("domain_type " + domain_type)
-                if ep_domain_name is not None and domain_type in VNF_AWARE_DOMAINS:
-                    nffg.domain = EndPointDB.get_end_point(nffg.getEndPoint(device_endpoint_id).db_id).domain_name
-
-            # clone the nffg into a service_graph before to start lowering, so we can add it into db if success
-            #sl_nffg = NF_FG()
-            #sl_nffg.parseDict(nffg.getDict(extended=True, domain=True))
-
-            # Manage profile
-            #logging.debug("User service graph: "+nffg.getJSON(domain=True))
-            
-            # Prepare profile deve essere modificata, ma non viene chiamata se il grafo e' quello di autenticazione
-            if device_endpoint_id is not None:
-                self.prepareProfile(mac_address, device_endpoint_id, nffg)
-            """
-            # Call orchestrator to instantiate NF-FG
-            logging.debug('Calling orchestrator sending NF-FG')
-            print("Calling orchestrator to instantiate '"+self.user_data.username+"' forwarding graph.")
-            if DEBUG_MODE is False:
-                try:
-                    self.orchestrator.put(nffg)
-                    # add the service graph to db
-                    #graph_db_id = Graph().add_graph(sl_nffg, session_id)
-                    #if domain_name is not None:
-                    #    Graph.set_domain_id(graph_db_id, Domain.get_domain_from_name(domain_name).id)
-                    logging.debug("Profile instantiated for user '"+self.user_data.username+"'")
-                    print("Profile instantiated for user '"+self.user_data.username+"'")
-                except Exception as err:
-                    logging.exception(err)
-                    Session().set_error(session_id)
-                    Graph.delete_graph(session_id)
-                    logging.debug("Failed to instantiated profile for user '"+self.user_data.username+"'")
-                    print("Failed to instantiated profile for user '"+self.user_data.username+"'")
-                    raise err
-            else:
-                # debug mode
-                #graph_db_id = Graph().add_graph(sl_nffg, session_id)
-                #if domain_name is not None:
-                #    Graph.set_domain_id(graph_db_id, Domain.get_domain_from_name(domain_name).id)
+        # Call orchestrator to instantiate NF-FG
+        logging.debug('Calling orchestrator sending NF-FG')
+        print("Calling orchestrator to instantiate '"+self.user_data.username+"' forwarding graph.")
+        if DEBUG_MODE is False:
+            try:
+                self.orchestrator.put(nffg)
                 logging.debug("Profile instantiated for user '"+self.user_data.username+"'")
-                print("Graph "+ graph_name  + " instantiated for user '"+self.user_data.username+"'")
+                print("Profile instantiated for user '"+self.user_data.username+"'")
+            except Exception as err:
+                logging.exception(err)
+                Session().set_error(session_id)
+                Graph.delete_graph(session_id)
+                logging.debug("Failed to instantiated profile for user '"+self.user_data.username+"'")
+                print("Failed to instantiated profile for user '"+self.user_data.username+"'")
+                raise err
+        else:
+            # debug mode
+            #graph_db_id = Graph().add_graph(sl_nffg, session_id)
+            #if domain_name is not None:
+            #    Graph.set_domain_id(graph_db_id, Domain.get_domain_from_name(domain_name).id)
+            logging.debug("Profile instantiated for user '"+self.user_data.username+"'")
+            print("Graph "+ graph_name  + " instantiated for user '"+self.user_data.username+"'")
         """
         # Set mac address in the session
         if mac_address is not None:
