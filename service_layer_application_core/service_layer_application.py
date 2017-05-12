@@ -38,22 +38,24 @@ class ServiceLayer(object):
         authentication_graph = AuthGraphManager()
         authentication_graph.instantiate_auth_graph(self)
         logging.debug("Authentication graph started")
-    """
+    
     def on_delete(self, request, response, mac_address=None):
-        
-        De-instantiate the NF-FG of the user, or update it by removing a mac rule
+        """ 
+        De-instantiate the NF-FG of the user, sending to the MdO the graph delete_client_graph...xml.
+        Every user must have his own client_graph and the correspondant delete_client_graph
 
         :param request: HTTP GET request containing user credential as headers (X-Auth-User, X-Auth-Pass, X-Auth-Tenant)
         :param response: HTTP response code
         :param mac_address: if specified, only the rule relative to this mac will be erased
-        
+        """
         try:
             user_data = UserAuthentication().authenticateUserFromRESTRequest(request)
-            graph_manager = ClientGraphManager(user_data)
-            graph_manager.delete_endpoint_from_user_device_if_last(mac_address)
-            # Now, it initialize a new controller instance to handle the request
+            graph_manager = ClientGraphManager(user_data=user_data, delete=True)
+            #graph_manager.delete_endpoint_from_user_device_if_last(mac_address)
+            #Now, it initialize a new controller instance to handle the request
             controller = ServiceLayerController(user_data)
-            controller.delete(mac_address=mac_address, nffg=graph_manager.nffg)
+            logging.debug("Graph to delete = %s", graph_manager.nffg)
+            controller.delete(nffg=graph_manager.nffg)
         except NoResultFound:
             print("EXCEPTION - NoResultFound")
             raise falcon.HTTPNotFound()
@@ -88,7 +90,7 @@ class ServiceLayer(object):
         except Exception as err:
             logging.exception(err)
             raise falcon.HTTPInternalServerError('Contact the admin. ', str(err))
-    """
+    
 
     def on_put(self, request, response):
         """

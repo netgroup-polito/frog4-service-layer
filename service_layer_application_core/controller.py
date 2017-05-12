@@ -85,7 +85,7 @@ class ServiceLayerController:
 
         return nffg
 
-    def delete(self, mac_address, nffg):
+    def delete(self, nffg, mac_address=None):
         """
         If there are more active session for specific user a delete become an update
         that erase a mac rule of user, otherwise if there is only one active session for the user
@@ -97,73 +97,82 @@ class ServiceLayerController:
         :type nffg: NF_FG
         """
 
-        # Returns the number of active session for the user, and if exists the session for the requested device
-        num_devices, session = Session().get_active_user_device_session(self.user_data.getUserID(),
-                                                                        mac_address,
-                                                                        error_aware=False)
+        logging.debug("Delete user service graph: "+self.user_data.username)
+        if nffg is not None:
+            # Graph parsing
+            try:
+                tree = ET.ElementTree(ET.fromstring(nffg))
+                root = tree.getroot()
+            except ET.ParseError as e:
+                print('ParseError: %s' % e.message)
+                logging.exception(e)
+                Session().set_error(session_id)
+                raise e 
+            newInfrastructure = Virtualizer.parse(root=root)
+            newFlowtable = newInfrastructure.nodes.node['SingleBiSBiS'].flowtable
+            newNfInstances = newInfrastructure.nodes.node['SingleBiSBiS'].NF_instances
+            # Call orchestrator to get the actual configuration
+            logging.debug('Calling orchestrator getting actual configuration')
+            try:
+                mdo_config = self.orchestrator.getNFFG()
+                logging.debug('Retrieved configuration: ')
+                logging.debug(mdo_config)
+            except Exception as err:
+                logging.exception(err)
+                Session().set_error(session_id)
+                logging.debug("Failed to retrieve MdO configuration ")
+                raise err
+            try:
+                original_tree = ET.ElementTree(ET.fromstring(mdo_config))
+                original_root = original_tree.getroot()
+            except Exception as err:
+                logging.exception(err)
+                Session().set_error(session_id)
+                logging.debug("Failed to retrieve MdO configuration ")
+                raise err
+            Infrastructure = Virtualizer.parse(root=original_root)
+            Flowtable = Infrastructure.nodes.node['SingleBiSBiS'].flowtable
+            NfInstances = Infrastructure.nodes.node['SingleBiSBiS'].NF_instances
 
-        if mac_address is not None:
-            logging.debug("Delete access for device: "+str(mac_address)+" of User: "+self.user_data.username)
+            for instance in newNfInstances:
+                todelete_id = instance.id.get_value()
+                for mdo_instance in NfInstances:
+                    if mdo_instance.id.get_value() == todelete_id:
+                        mdo_instance.set_operation('delete', recursive=False)
+            for flowentry in newFlowtable:
+                flowtodelete_id = flowentry.id.get_value()
+                for mdo_flowentry in Flowtable:
+                    if mdo_flowentry.id.get_value() == flowtodelete_id:
+                        mdo_flowentry.set_operation('delete', recursive=False)
+
+            # Adding the user graph to the original configuration
+            nffg = Infrastructure.xml()
+        # De-instantiate User Profile Graph
+        if DEBUG_MODE is False:
+            try:
+                self.orchestrator.put(nffg)
+                logging.debug("Profile deleted for user '"+self.user_data.username+"'")
+                print("Profile deleted for user '"+self.user_data.username+"'")
+            except Exception as err:
+                logging.exception(err)
+                Session().set_error(session_id)
+                Graph.delete_graph(session_id)
+                logging.debug("Failed to instantiated profile for user '"+self.user_data.username+"'")
+                print("Failed to instantiated profile for user '"+self.user_data.username+"'")
+                raise err
         else:
-            logging.debug("Delete user service graph: "+self.user_data.username)
-        logging.debug("Number of devices for the user: "+str(num_devices))
-        ended = None
-        if num_devices == 1:
-            # De-instantiate User Profile Graph
-            if DEBUG_MODE is False:
-                try:
-                    self.orchestrator.delete(session.service_graph_id)
-                    Graph().delete_session(session.id)
-                    Session().delete_user_devices_for_session(session.id)
-                    Session().updateStatus(session.id, 'deleted')
-                    Session().set_ended(session.id)
-                except Exception as err:
-                    Session().set_error(session.id)
-                    raise err
-            else:
-                # debug mode
-                Graph().delete_session(session.id)
-                Session().delete_user_devices_for_session(session.id)
+            # debug mode
+            #graph_db_id = Graph().add_graph(sl_nffg, session_id)
+            #if domain_name is not None:
+            #    Graph.set_domain_id(graph_db_id, Domain.get_domain_from_name(domain_name).id)
+            logging.debug(nffg)
+        logging.debug('Deleted profile of user "'+self.user_data.username+'"')
+        print('Deleted profile of user "' + self.user_data.username + '"')
 
-            logging.debug('Deleted profile of user "'+self.user_data.username+'"')
-            print('Deleted profile of user "' + self.user_data.username + '"')
-
-            # Set the field ended in the table session to the actual data time
-            Session().set_ended(session.id)
-        else:
-            logging.debug('Delete access for specific device')
-
-            # This delete is an update of the user service graph
-            # clone the nffg into a service_graph before to start lowering, so we can add it into db if success
-            sl_nffg = NF_FG()
-            sl_nffg.parseDict(nffg.getDict(extended=True, domain=True))
-
-            # delete this device
-            Session().delete_user_device_for_session(session.id, mac_address=mac_address)
-
-            # add old devices
-            self.addDeviceToNF_FG(None, None, nffg)
-
-            logging.debug('New user profile :'+nffg.getJSON(domain=True))
-
-            # Call orchestrator to update NF-FG
-            logging.debug('Call orchestrator sending the following NF-FG: '+nffg.getJSON(domain=True))
-            if DEBUG_MODE is False:
-                try:
-                    self.orchestrator.put(nffg)
-                    Session().updateStatus(session.id, 'updated')
-                    Graph.set_service_graph(Graph.get_last_graph(session.id).id, sl_nffg)
-                except Exception as err:
-                    Session().set_error(session.id)
-                    raise err
-            else:
-                # debug mode
-                Session().updateStatus(session.id, 'updated')
-                Graph.set_service_graph(Graph.get_last_graph(session.id).id, sl_nffg)
-
-            logging.debug('Device deleted "'+mac_address+'" of user "'+self.user_data.username+'"')
-            print('Device deleted "' + mac_address + '" of user "' + self.user_data.username + '"')
-    
+        # Set the field ended in the table session to the actual data time
+        #TODO scommentare la riga sotto alla fine del debug
+        #Session().set_ended(session.id)
+ 
     def put(self, mac_address=None, is_user=False, domain_name=None, nffg=None):
         """
 
@@ -207,14 +216,15 @@ class ServiceLayerController:
                 newFlowtable = newInfrastructure.nodes.node['SingleBiSBiS'].flowtable
                 newNfInstances = newInfrastructure.nodes.node['SingleBiSBiS'].NF_instances
                 # Modifying the flow rule to set the source mac_address
-                match_string = "ether_type=0x806,dest_mac=" + mac_address
-                logging.debug("Match string = " + match_string)
-                for newflowentry in newFlowtable:
-                    port_path = newflowentry.port.get_value()
-                    logging.debug("Port: " + port_path)
-                    tokens = port_path.split('/')
-                    if tokens[1] == "virtualizer":
-                        newflowentry.match.data = match_string
+                if mac_address is not None:
+                    match_string = "ether_type=0x806,dest_mac=" + mac_address
+                    logging.debug("Match string = " + match_string)
+                    for newflowentry in newFlowtable:
+                        port_path = newflowentry.port.get_value()
+                        logging.debug("Port: " + port_path)
+                        tokens = port_path.split('/')
+                        if tokens[1] == "virtualizer":
+                            newflowentry.match.data = match_string
                 # Call orchestrator to get the actual configuration
                 logging.debug('Calling orchestrator getting actual configuration')
                 try:
@@ -231,11 +241,14 @@ class ServiceLayerController:
                     original_root = original_tree.getroot()
                 except ET.ParseError as e:
                     print('ParseError: %s' % e.message)
-                    raise ServerError("ParseError: %s" % e.message)
+                    logging.exception(e)
+                    Session().set_error(session_id)
+                    raise e
+
                 #Parsing of the Mdo original configuration
-                Infrastracture = Virtualizer.parse(root= original_root)
-                Flowtable = Infrastracture.nodes.node['SingleBiSBiS'].flowtable
-                NfInstances = Infrastracture.nodes.node['SingleBiSBiS'].NF_instances
+                Infrastructure = Virtualizer.parse(root= original_root)
+                Flowtable = Infrastructure.nodes.node['SingleBiSBiS'].flowtable
+                NfInstances = Infrastructure.nodes.node['SingleBiSBiS'].NF_instances
                 for child in newNfInstances:
                     graph_id = child.id.get_value()
                     graph_name = child.name.get_value()
@@ -243,23 +256,27 @@ class ServiceLayerController:
 
 
                 #Adding the user graph to the original configuration
-                #TODO valutare se gestire qui la delete quando l'utente fa il logout
+                #TODO valutare se gestire qui la delete quando l'utente fa il logout --> per cancellare un grafo, passo al controller.put il grafo 
+                #utente con operation=delete, poi la put aggiornera' la config dell'mdo
                 try:
                     for instance in newNfInstances:
                         NfInstances.add(instance)
-                except KeyError:
-                    raise ClientError("Can't add the instance to the graph")
+                except Exception as err:
+                    logging.exception(err)
+                    Session().set_error(session_id)
+                    logging.debug("Can't add the nf instance to the graph")
                 try:
                     for flowentry in newFlowtable:
                         Flowtable.add(flowentry)
-                except KeyError:
-                    raise ClientError("Can't add the flowrule to the graph")
+                except Exception as err:
+                    loggin.exception(err)
+                    Session().set_error(session_id)
+                    logging.debug("Can't add the flowrule to the graph")
                 logging.debug("Graph is going to be instantiated:")
-                logging.debug(Infrastracture.xml())
+                logging.debug(Infrastructure.xml())
                 #TODO eliminare il commento alla initialize session finito il debug. Bisogna anche tenere traccia degli id delle flowrule quando l'utente fa il logout
                 #Session().inizializeSession(session_id, self.user_data.getUserID(), graph_id, graph_name)
-
-
+                nffg= Infrastructure.xml()
         else:
             # Authentication graph
             logging.debug('Instantiating the authentication graph')
@@ -276,7 +293,9 @@ class ServiceLayerController:
                         logging.debug("%s %s", child.tag, child.attrib)
                 except ET.ParseError as e:
                     print('ParseError: %s' % e.message)
-                    raise ServerError("ParseError: %s" % e.message)
+                    logging.exception(e)
+                    Session().set_error(session_id)
+                    raise e
                 newInfrastructure = Virtualizer.parse(root=root)
 	        newFlowtable = newInfrastructure.nodes.node['SingleBiSBiS'].flowtable
 	        newNfInstances = newInfrastructure.nodes.node['SingleBiSBiS'].NF_instances

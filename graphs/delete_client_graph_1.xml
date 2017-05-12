@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+<virtualizer>
+	<id>SingleBiSBiS-NFFG</id>
+	<name>Single-BiSBiS-View</name>
+	<nodes>
+		<node>
+			<id>SingleBiSBiS</id>
+			<NF_instances>
+				<node operation="delete">
+					<id>2</id>
+				</node>
+				</NF_instances>
+				<flowtable>
+				<flowentry operation="delete">
+					<id>11</id>
+					
+				</flowentry>
+				
+				<flowentry operation="delete">
+					<id>12</id>
+					
+					</flowentry>
+					</flowtable>
+		</node>
+	</nodes>
+	<version>2016-07-08; compiled at 2016-10-12  13:43:31</version>
+	</virtualizer>
+

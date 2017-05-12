@@ -30,7 +30,7 @@ class ClientGraphManager:
     orchestrator_ip = Configuration().ORCH_IP
     orchestrator_port = Configuration().ORCH_PORT
 
-    def __init__(self, user_data):
+    def __init__(self, user_data, delete=None):
         """
 
         :param user_data:
@@ -41,6 +41,7 @@ class ClientGraphManager:
         self.user_tenant = user_data.tenant
         self.user_id = User().getUser(self.user_name).id
         self.current_domain_id = None
+        self.delete = delete
         #get the user service graph instance from db
         #self.nffg = self._get_current_instance()
         #if self.nffg is None:
@@ -195,16 +196,28 @@ class ClientGraphManager:
         nffg_file = User().getServiceGraph(self.user_name)
         if nffg_file is None:
             raise GraphNotFound("No graph defined for the user '" + self.user_name + "'")
-        logging.debug("Graph %s find for the user %s", nffg_file, self.user_name)
-        try:
-            tmpFile = open("graphs/" + nffg_file, "r")
-            escapeNffg = tmpFile.read()
-            tmpFile.close()
-        except IOError as e:
-            print("Failed to read " + nffg_file)
-            logging.error("Failed to read " + nffg_file)
-            logging.exception(e)
-        return escapeNffg
+        if self.delete == True:
+            logging.debug("Graph delete_%s find for the user %s", nffg_file, self.user_name)
+            try:
+                tmpFile = open("graphs/delete_" + nffg_file, "r")
+                escapeNffg = tmpFile.read()
+                tmpFile.close()
+            except IOError as e:
+                print("Failed to read " + nffg_file)
+                logging.error("Failed to read " + nffg_file)
+                logging.exception(e)
+            return escapeNffg
+        else:
+            logging.debug("Graph %s find for the user %s", nffg_file, self.user_name)
+            try:
+                tmpFile = open("graphs/" + nffg_file, "r")
+                escapeNffg = tmpFile.read()
+                tmpFile.close()
+            except IOError as e:
+                print("Failed to read " + nffg_file)
+                logging.error("Failed to read " + nffg_file)
+                logging.exception(e)
+            return escapeNffg
 
     def _get_user_ingress_port(self):
         for vnf in self.nffg.vnfs:
