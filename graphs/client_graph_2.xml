@@ -42,8 +42,8 @@
 			</metadata>
 			<NF_instances>
 				<node operation="create">
-					<id>2</id>
-					<name>mca-fw1</name>
+					<id>3</id>
+					<name>mca-fw2</name>
 					<type>cirros</type>
 					<ports>
 						<port>
@@ -90,9 +90,9 @@
 			<flowtable>
 				
 				<flowentry operation="create">
-					<id>21</id>
+					<id>31</id>
 					<priority>100</priority>
-					<port>../../../NF_instances/node[id=2]/ports/port[id=1]</port>
+					<port>../../../NF_instances/node[id=3]/ports/port[id=1]</port>
 					
 					<out>/virtualizer/nodes/node[id=SingleBiSBiS]/ports/port[id=port-sap1]</out>
 					<resources>
@@ -100,28 +100,28 @@
 					</resources>
 				</flowentry>
 				<flowentry operation="create">
-					<id>22</id>
+					<id>32</id>
 					<priority>100</priority>
 					<port>/virtualizer/nodes/node[id=SingleBiSBiS]/ports/port[id=port-sap1]</port>	
-					<out>../../../NF_instances/node[id=2]/ports/port[id=1]</out>
+					<out>../../../NF_instances/node[id=3]/ports/port[id=1]</out>
 					<resources>
 						<bandwidth>0</bandwidth>
 					</resources>
 				</flowentry>
 				<flowentry operation="create">
-					<id>23</id>
+					<id>33</id>
 					<priority>100</priority>
-					<port>../../../NF_instances/node[id=2]/ports/port[id=2]</port>
+					<port>../../../NF_instances/node[id=3]/ports/port[id=2]</port>
 					<out>/virtualizer/nodes/node[id=SingleBiSBiS]/ports/port[id=port-sap2]</out>
 					<resources>
 						<bandwidth>0.0</bandwidth>
 					</resources>
 				</flowentry>
 				<flowentry operation="create">
-					<id>24</id>
+					<id>34</id>
 					<priority>100</priority>
 					<port>/virtualizer/nodes/node[id=SingleBiSBiS]/ports/port[id=port-sap2]</port>					
-					<out>../../../NF_instances/node[id=2]/ports/port[id=2]</out>
+					<out>../../../NF_instances/node[id=3]/ports/port[id=2]</out>
 					<resources>
 						<bandwidth>0.0</bandwidth>
 					</resources>

@@ -206,6 +206,7 @@ class ServiceLayerController:
             session_id = uuid.uuid4().hex
             if nffg is not None:
                 # Graph parsing
+		flag= True
                 try:
                     tree = ET.ElementTree(ET.fromstring(nffg))
                     root = tree.getroot()
@@ -217,14 +218,16 @@ class ServiceLayerController:
                 newNfInstances = newInfrastructure.nodes.node['SingleBiSBiS'].NF_instances
                 # Modifying the flow rule to set the source mac_address
                 if mac_address is not None:
-                    match_string = "ether_type=0x806,dest_mac=" + mac_address
+                    match_string = "source_mac=" + mac_address
                     logging.debug("Match string = " + match_string)
                     for newflowentry in newFlowtable:
-                        port_path = newflowentry.port.get_value()
-                        logging.debug("Port: " + port_path)
-                        tokens = port_path.split('/')
-                        if tokens[1] == "virtualizer":
-                            newflowentry.match.data = match_string
+                        if flag:
+			    port_path = newflowentry.port.get_value()
+                            logging.debug("Port: " + port_path)
+                            tokens = port_path.split('/')
+                            if tokens[1] == "virtualizer":
+                                newflowentry.match.data = match_string
+                                flag=False
                 # Call orchestrator to get the actual configuration
                 logging.debug('Calling orchestrator getting actual configuration')
                 try:

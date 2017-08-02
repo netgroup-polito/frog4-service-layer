@@ -8,7 +8,7 @@
 			<NF_instances>
 				<node operation="create">
 					<id>1</id>
-					<name>prova</name>
+					<name>auth</name>
 					<type>cirros</type>
 					<ports>
 						<port>
@@ -26,8 +26,8 @@
 				</NF_instances>
 				<flowtable>
 				<flowentry operation="create">
-					<id>1</id>
-					<priority>100</priority>
+					<id>11</id>
+					<priority>111</priority>
 					<port>../../../NF_instances/node[id=1]/ports/port[id=1]</port>
 					<out>/virtualizer/nodes/node[id=SingleBiSBiS]/ports/port[id=port-sap1]</out>
 					<resources>
@@ -36,8 +36,8 @@
 				</flowentry>
 				
 				<flowentry operation="create">
-					<id>2</id>
-					<priority>100</priority>
+					<id>12</id>
+					<priority>111</priority>
 					<port>/virtualizer/nodes/node[id=SingleBiSBiS]/ports/port[id=port-sap1]</port>
 					<out>../../../NF_instances/node[id=1]/ports/port[id=1]</out>
 					<resources>
