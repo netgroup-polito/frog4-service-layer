@@ -4,7 +4,7 @@
 *.pydevproject
 *.DS_Store
 .DS_Store
-
+.env/*
 .idea/*
 
 .gitignore.*

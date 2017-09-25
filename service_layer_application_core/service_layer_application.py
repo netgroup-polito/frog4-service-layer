@@ -2,6 +2,8 @@
 Created on Oct 1, 2014
 
 @author: fabiomignini
+@author_jolnet_version: Francesco Lubrano
+
 """
 import requests
 import falcon
@@ -11,20 +13,14 @@ import logging
 
 from sqlalchemy.orm.exc import NoResultFound
 
-#from nffg_library.nffg import EndPoint
 from service_layer_application_core.authentication_graph_manager import AuthGraphManager
 from service_layer_application_core.client_graph_manager import ClientGraphManager
-#from service_layer_application_core.nffg_manager import NFFG_Manager
 from service_layer_application_core.sql.session import Session, UserDeviceModel
 from service_layer_application_core.sql.user import User
 from service_layer_application_core.user_authentication import UserAuthentication
-from service_layer_application_core.exception import SessionNotFound, UnauthorizedRequest, RequestValidationError, \
-    GraphNotFound
+from service_layer_application_core.exception import SessionNotFound, UnauthorizedRequest, RequestValidationError, GraphNotFound
 from service_layer_application_core.controller import ServiceLayerController
 from service_layer_application_core.validate_request import RequestValidator
-
-#from json.decoder import JSONDecodeError
-
 
 class ServiceLayer(object):
     """
@@ -100,12 +96,13 @@ class ServiceLayer(object):
 
         :param request: HEADER - user credential (X-Auth-User, X-Auth-Pass, X-Auth-Tenant)
                         BODY - json that contain the MAC address of the user device, and its virtual port as
-                        {"session":{"device":{"mac":"fc:4d:e2:56:9f:19", "port":"eth4"}}}
+                        {"session":{"device":{"mac":"fc:4d:e2:56:9f:19", "port":"switch_id/port"}}}
                         or void session if no devices should be attached, like
                         {"session":{}}
         :param response: HTTP response code
         """
         try:
+            logging.debug("Something arrived");
             user_data = UserAuthentication().authenticateUserFromRESTRequest(request)
             logging.debug("Authenticated user: " + user_data.username)
             # Now, it initialize a new controller instance to handle the request
@@ -122,6 +119,7 @@ class ServiceLayer(object):
                 # send request to controller
                 controller.put(
                     mac_address=request_dict['session']['device']['mac'],
+                    location=request_dict['session']['device']['port'],
                     nffg=graph_manager.nffg,
                     is_user = True
                 )

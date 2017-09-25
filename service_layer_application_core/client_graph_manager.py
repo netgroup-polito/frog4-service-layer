@@ -8,21 +8,14 @@ Created on Apr 21, 2016
 import logging
 
 from virtualizer_library.virtualizer import ET, Virtualizer,  Software_resource, Infra_node, Port as Virt_Port
-#from nffg_library.nffg import EndPoint, FlowRule, Match, Action, NF_FG
 from service_layer_application_core.authentication_graph_manager import AuthGraphManager
 from service_layer_application_core.common.user_session import UserSession
 from service_layer_application_core.config import Configuration
 from service_layer_application_core.exception import GraphNotFound, SessionNotFound
-#from service_layer_application_core.nffg_manager import NFFG_Manager
 from service_layer_application_core.orchestrator_rest import GlobalOrchestrator
-#from service_layer_application_core.sql.end_point import EndPointDB
-#from service_layer_application_core.sql.graph import Graph
 from service_layer_application_core.sql.session import Session
 from service_layer_application_core.sql.user import User
 from service_layer_application_core.user_authentication import UserData
-
-ISP_INGRESS = Configuration().ISP_INGRESS
-USER_EGRESS = Configuration().USER_EGRESS
 
 
 class ClientGraphManager:
@@ -43,9 +36,6 @@ class ClientGraphManager:
         self.current_domain_id = None
         self.delete = delete
         #get the user service graph instance from db
-        #self.nffg = self._get_current_instance()
-        #if self.nffg is None:
-        #TODO extend the support to multiple device per user-->for now one user and one device per time
         self.nffg = self._get_user_defined_graph()
         logging.debug("loaded template user graph from file")
 

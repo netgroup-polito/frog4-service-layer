@@ -2,37 +2,30 @@
 Created on Apr 14, 2016
 
 @author: gabrielecastellano
+@author_jolnet_version: Francesco Lubrano
 """
-#import json
+
 import logging
 
 
 from service_layer_application_core.common.user_session import UserSession
 from service_layer_application_core.config import Configuration
 from service_layer_application_core.controller import ServiceLayerController
-#from service_layer_application_core.nffg_manager import NFFG_Manager
 from service_layer_application_core.orchestrator_rest import GlobalOrchestrator
-#from service_layer_application_core.sql.end_point import EndPointDB
-#from service_layer_application_core.sql.graph import Graph
 from service_layer_application_core.sql.session import Session
 from service_layer_application_core.sql.user import User
-#from service_layer_application_core.sql.domain import Domain
 from service_layer_application_core.user_authentication import UserData
-#from service_layer_application_core.isp_graph_manager import ISPGraphManager
-#from nffg_library.nffg import NF_FG, EndPoint, FlowRule, Port, Match, Action
 from virtualizer_library.virtualizer import ET, Virtualizer,  Software_resource, Infra_node, Port as Virt_Port
 
-#from .domain_info import DomainInfo
-
-
+'''
 CAPTIVE_PORTAL_IP = Configuration().CAPTIVE_PORTAL_IP
 
 ISP_INGRESS = Configuration().ISP_INGRESS
 USER_EGRESS = Configuration().USER_EGRESS
 
 INGRESS_TYPE = Configuration().INGRESS_TYPE
-
 VNF_AWARE_DOMAINS = Configuration().VNF_AWARE_DOMAINS
+'''
 
 
 class AuthGraphManager:
@@ -46,11 +39,6 @@ class AuthGraphManager:
         self.admin_name = admin_model.name
         self.admin_password = admin_model.password
         self.admin_tenant = User().getTenantName(admin_model.tenant_id)
-        #self.current_domain_id = None
-        # get current instance of authentication service-graph
-        #if Session().checkSession(self.admin_id):
-         #   session_id = Session().get_active_user_session(self.admin_id).id
-         #   self.current_domain_id = Graph().get_last_graph(session_id).domain_id
 
     def instantiate_auth_graph(self, domain_info=None):
         """
@@ -62,19 +50,14 @@ class AuthGraphManager:
         :type domain_info: DomainInfo
         """
 
-        #if domain_info is not None:
-        #    domain_name = domain_info.name
-        #    logging.debug("Trying to instantiate the authentication graph on domain '" + domain_info.name + "'...")
-        #else:
         domain_name = None
         logging.debug("Trying to instantiate the authentication graph on the default domain")
 
         if (domain_name is None):
 
             # get the authentication graph
-            #nffg = NFFG_Manager.getNF_FGFromFile('authentication_graph.json')
             nffg_file = './graphs/authentication_graph.xml'
-            logging.debug("Reading authentication graph file: %s", nffg_file)
+            logging.debug("Reading authentication graph file: ")
             logging.debug(nffg_file)
             try:
                 tmpFile = open(nffg_file, "r")
@@ -85,10 +68,6 @@ class AuthGraphManager:
                 print("Failed to read authentication graph.")
                 logging.error("Failed to read authentication graph.")
                 logging.exception(e)
-            # prepare the captive portal control end point
-            # self._prepare_cp_control_end_point(nffg, domain_info)
-            # prepare the end point to isp
-            #self._prepare_egress_end_point(nffg)
 
             # send to controller
             try:
