@@ -153,7 +153,7 @@ class ServiceLayerController:
         # if domain is specified, label the nffg with it
         if domain_name is not None:
             nffg.domain = domain_name
-        # Check if the user have an active session TODO: da rivedere la condizione, devo aggiungere un flag di loggato al db
+        # Check if the user have an active session TODO: aggiungere check con get_active_user_session
         #if UserSession(self.user_data.getUserID(), self.user_data).checkSession(nffg.id, self.orchestrator) is True:
         if is_user is True:
             # User graph
@@ -167,7 +167,7 @@ class ServiceLayerController:
 
                 logging.debug("+++++++++++++++++++++++++++++++++++++++++")
                 #nffg = setFlowentry(nffg)
-                nffg = addFlows(self, nffg, location, 2)
+                nffg = addFlows(self, nffg, location)
 
 
                 try:
@@ -296,7 +296,7 @@ class ServiceLayerController:
             logging.debug("DEBUG_MODE: Graph "+ graph_name  + " instantiated for user '"+self.user_data.username+"'")
             logging.debug(nffg)
 
-def addFlows(self, nffg, location, nf_id):
+def addFlows(self, nffg, location):
 	logging.debug('Calling orchestrator getting actual configuration')
 	try:
 		mdo_config = self.orchestrator.getNFFG()
@@ -306,6 +306,20 @@ def addFlows(self, nffg, location, nf_id):
 		logging.exception(err)
 		logging.debug("Failed to retrieve MdO configuration ")
 		raise err
+	try:
+		new_tree = ET.ElementTree(ET.fromstring(nffg));
+		new_root = new_tree.getroot()
+	except ET.ParseError as e:
+		print('ParseError: %s' % e.message)
+		logging.exception(e)
+		raise e
+	newInfrastructure = Virtualizer.parse(root= new_root)
+	newInstances = newInfrastructure.nodes.node['SingleBiSBiS'].NF_instances
+	nf_id = 0
+	for nf_inst in newInstances:
+		nf_id = nf_inst.id.get_value() #take the first nf id to set the id of flowentries
+		break
+
 	try:
 		original_tree = ET.ElementTree(ET.fromstring(mdo_config))
 		original_root = original_tree.getroot()
@@ -325,10 +339,10 @@ def addFlows(self, nffg, location, nf_id):
 			logging.debug('port found')
         	#port_id found
 			id_port = port.id.get_value()
-			id_flow1 = 21 #TODO da cambiare con un valore dinamico
-			port_flow1 = '../../../NF_instances/node[id=' + '2' + ']/ports/port[id=0]'
+			id_flow1 = nf_id + str(1) #TODO da cambiare con un valore dinamico
+			port_flow1 = '../../../NF_instances/node[id=' + nf_id + ']/ports/port[id=0]' #the port with id 0 is reserved to the flow added by the service layer 
 			out_flow1 = '/virtualizer/nodes/node[id=SingleBiSBiS]/ports/port[id=' + id_port + ']'       
-			id_flow2 = 22
+			id_flow2 = nf_id + str(2)
 			port_flow2 = out_flow1
 			out_flow2 = port_flow1
 			filled_nffg = create_xml(id_flow1, port_flow1, out_flow1, id_flow2, port_flow2, out_flow2, nffg)
