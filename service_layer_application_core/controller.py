@@ -349,12 +349,12 @@ def addFlows(self, nffg, location):
 			return filled_nffg
 
 def create_xml(id_flow1, port_flow1, out_flow1, id_flow2, port_flow2, out_flow2, nffg):
-  	with open("tmp_"+str(id_flow1), 'w') as outfile1:
+  	with open(".tmp_"+str(id_flow1), 'w') as outfile1:
   		#logging('Writing file: tmp_' + id_flow1)
    		outfile1.write(nffg);
 
-   	with open("tmp_"+str(id_flow1), 'r') as infile:
-   		with open("tmp_1"+str(id_flow1), 'w') as outfile:
+   	with open(".tmp_"+str(id_flow1), 'r') as infile:
+   		with open(".tmp_1"+str(id_flow1), 'w') as outfile:
    			flag = True
    			rowIter = iter(infile)
    			for row in rowIter:
@@ -383,6 +383,6 @@ def create_xml(id_flow1, port_flow1, out_flow1, id_flow2, port_flow2, out_flow2,
    					flag = False
    				else:
    					outfile.write(row);
-   	with open("tmp_1"+str(id_flow1), 'r') as return_file:
+   	with open(".tmp_1"+str(id_flow1), 'r') as return_file:
    		return return_file.read()
 

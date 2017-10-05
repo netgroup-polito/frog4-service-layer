@@ -17,16 +17,6 @@ from service_layer_application_core.sql.user import User
 from service_layer_application_core.user_authentication import UserData
 from virtualizer_library.virtualizer import ET, Virtualizer,  Software_resource, Infra_node, Port as Virt_Port
 
-'''
-CAPTIVE_PORTAL_IP = Configuration().CAPTIVE_PORTAL_IP
-
-ISP_INGRESS = Configuration().ISP_INGRESS
-USER_EGRESS = Configuration().USER_EGRESS
-
-INGRESS_TYPE = Configuration().INGRESS_TYPE
-VNF_AWARE_DOMAINS = Configuration().VNF_AWARE_DOMAINS
-'''
-
 
 class AuthGraphManager:
     orchestrator_ip = Configuration().ORCH_IP
@@ -72,24 +62,23 @@ class AuthGraphManager:
             # send to controller
             try:
                 user_data = UserData(self.admin_name, self.admin_password, self.admin_tenant)
-                #Create a new controller instance to send the auth_graph to the MdO
-                controller = ServiceLayerController(user_data)
-                controller.put(nffg=escapeNffg)
-                logging.info("Authentication graph correctly instantiated")
-                print("Authentication graph instantiated")
-                '''
-                if domain_name is not None:
-                    self.current_domain_id = domain_info.domain_id
+                session = Session().checkSession(self.admin_id)
+                if session is True:
+                    logging.debug("Authentication graph already instantiated")
+                    print("Authentication graph already instantiated")
                 else:
-                    # TODO this is wronged, i should ask to the orchestrator
-                    session_id = Session().get_active_user_session(self.admin_id).id
-                    self.current_domain_id = Graph().get_last_graph(session_id).domain_id
-                '''
+                    #Create a new controller instance to send the auth_graph to the MdO
+                    controller = ServiceLayerController(user_data)
+                    controller.put(nffg=escapeNffg)
+                    logging.info("Authentication graph correctly instantiated")
+                    print("Authentication graph instantiated")
+                
             except Exception as err:
                 print("Failed to instantiate authentication graph.")
                 logging.error("Failed to instantiate authentication graph.")
                 logging.exception(err)
 
+    '''
     def update(self, nffg):
         """
         update the currently instantiated authentication graph
@@ -381,4 +370,4 @@ class AuthGraphManager:
             print("Failed to delete authentication graph.")
             logging.error("Failed to delete authentication graph.")
             logging.exception(err)
-
+    '''

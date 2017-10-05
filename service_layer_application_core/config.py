@@ -42,10 +42,11 @@ class Configuration(object):
         self._VERBOSE = config.getboolean('log', 'verbose')
         self._DEBUG = config.getboolean('log', 'debug')
         self._DB_CONNECTION = config.get('db', 'connection')
+        self._ADMIN_NAME = config.get('admin', 'admin_name')
+        '''
         self._NOBODY_USERNAME = config.get('nobody', 'username')
         self._NOBODY_PASSWORD = config.get('nobody', 'password')
         self._NOBODY_TENANT = config.get('nobody', 'tenant')
-        self._ADMIN_NAME = config.get('admin', 'admin_name')
 
         self._ISP_USERNAME = config.get('ISP', 'username')
         self._ISP_PASSWORD = config.get('ISP', 'password')
@@ -55,20 +56,21 @@ class Configuration(object):
         self._INGRESS_TYPE = config.get('user_connection', 'ingress_type')
         self._EGRESS_PORT = config.get('user_connection', 'egress_port')
         self._EGRESS_TYPE = config.get('user_connection', 'egress_type')
+        
         self._CP_CONTROL_PORT = config.get('user_connection', 'cp_control_port')
         self._CP_CONTROL_TYPE = config.get('user_connection', 'cp_control_type')
-
+        
         self._SWITCH_NAME = [e.strip() for e in config.get('switch', 'switch_l2_name').split(',')]
         self._CONTROL_SWITCH_NAME = config.get('switch', 'switch_l2_control_name')
-
+        '''
         self._SERVICE_LAYER_IP = config.get('service_layer', 'ip')
         self._SERVICE_LAYER_PORT = config.get('service_layer', 'port')
-
+        '''
         self._DD_NAME = config.get('doubledecker', 'dd_name')
         self._DD_CUSTOMER = config.get('doubledecker', 'dd_customer')
         self._BROKER_ADDRESS = config.get('doubledecker', 'broker_address')
         self._DD_KEYFILE = config.get('doubledecker', 'dd_keyfile')
-
+        '''
         self._DEBUG_MODE = config.getboolean('orchestrator', 'debug_mode')
 
         self._ORCH_PORT = config.get('orchestrator', 'port')
@@ -76,11 +78,11 @@ class Configuration(object):
         self._ORCH_TIMEOUT = config.get('orchestrator', 'timeout')
 
         self._CAPTIVE_PORTAL_IP = config.get('captive_portal', 'ip')
-
+        '''
         self._FLOW_PRIORITY = config.get('user_connection', 'flow_priority')
         self._SWITCH_TEMPLATE = config.get('switch', 'template')
         self._DEFAULT_PRIORITY = config.get('flowrule', "default_priority")
-
+        
         self._ENRICH_USER_GRAPH = config.getboolean('other_settings', 'enrich_user_graph')
         self._BLIND_ISP_DEPLOYMENT = config.getboolean('other_settings', 'blind_isp_deployment')
         self._INGRESS_GRAPH_FILE = config.get('ingress_nf_fg', "file")
@@ -101,7 +103,7 @@ class Configuration(object):
         # Orchestrator
         self._ISP = config.getboolean('orchestrator', 'isp')
         self._NOBODY = config.getboolean('orchestrator', 'nobody')
-
+        '''
         self._VNF_AWARE_DOMAINS = json.loads(config.get('other_settings', 'vnf_aware_domains'))
 
     @property
@@ -117,16 +119,16 @@ class Configuration(object):
         return self._ORCH_TIMEOUT
 
     @property
+    def ADMIN_NAME(self):
+        return self._ADMIN_NAME
+    '''
+    @property
     def ISP(self):
         return self._ISP
 
     @property
     def NOBODY(self):
         return self._NOBODY
-
-    @property
-    def ADMIN_NAME(self):
-        return self._ADMIN_NAME
 
     @property
     def SG_USER_INGRESS(self):
@@ -183,11 +185,11 @@ class Configuration(object):
     @property
     def DD_KEYFILE(self):
         return self._DD_KEYFILE
-
+    '''
     @property
     def DEBUG_MODE(self):
         return self._DEBUG_MODE
-
+    '''
     @property
     def CONTROL_SWITCH_NAME(self):
         return self._CONTROL_SWITCH_NAME
@@ -243,15 +245,15 @@ class Configuration(object):
     @property
     def INGRESS_GRAPH_FILE(self):
         return self._INGRESS_GRAPH_FILE
-
+    '''
     @property
     def DEFAULT_PRIORITY(self):
         return self._DEFAULT_PRIORITY
-
+    '''
     @property
     def SWITCH_TEMPLATE(self):
         return self._SWITCH_TEMPLATE
-
+    '''
     @property
     def FLOW_PRIORITY(self):
         return self._FLOW_PRIORITY
@@ -267,7 +269,7 @@ class Configuration(object):
     @property
     def CAPTIVE_PORTAL_IP(self):
         return self._CAPTIVE_PORTAL_IP
-
+    '''
     @property
     def NOBODY_USERNAME(self):
         return self._NOBODY_USERNAME
@@ -279,7 +281,7 @@ class Configuration(object):
     @property
     def NOBODY_TENANT(self):
         return self._NOBODY_TENANT
-
+    '''
     @property
     def DB_CONNECTION(self):
         return self._DB_CONNECTION

@@ -33,7 +33,7 @@ class ServiceLayer(object):
         """
         authentication_graph = AuthGraphManager()
         authentication_graph.instantiate_auth_graph(self)
-        logging.debug("Authentication graph started")
+        logging.debug("Authentication graph started - commented")
     
     def on_delete(self, request, response, mac_address=None):
         """ 
@@ -46,6 +46,7 @@ class ServiceLayer(object):
         """
         try:
             user_data = UserAuthentication().authenticateUserFromRESTRequest(request)
+
             graph_manager = ClientGraphManager(user_data=user_data, delete=True)
             #graph_manager.delete_endpoint_from_user_device_if_last(mac_address)
             #Now, it initialize a new controller instance to handle the request
@@ -102,31 +103,34 @@ class ServiceLayer(object):
         :param response: HTTP response code
         """
         try:
-            logging.debug("Something arrived");
+            logging.debug("A login request arrived");
             user_data = UserAuthentication().authenticateUserFromRESTRequest(request)
             logging.debug("Authenticated user: " + user_data.username)
-            # Now, it initialize a new controller instance to handle the request
-            controller = ServiceLayerController(user_data)
-            request_dict = json.loads(request.stream.read().decode())
-            RequestValidator.validate(request_dict)
-            if 'device' in request_dict['session']:
-                # add a new endpoint to the graph for this device if it came from a new port
-                graph_manager = ClientGraphManager(user_data)
-                #user_device = Session().get_user_device(user_data.username, request_dict['session']['device']['mac'])
-                #The user have an active session for that device
-                #response.status = falcon.HTTP_403
-                
-                # send request to controller
-                controller.put(
-                    mac_address=request_dict['session']['device']['mac'],
-                    location=request_dict['session']['device']['port'],
-                    nffg=graph_manager.nffg,
-                    is_user = True
-                )
-                response.status = falcon.HTTP_202
-            else:
+            user_id = User().getUser(user_data.username).id
+            #print("User id is: " + user_id)
+            session = Session().checkSession(user_id)
+            if session is True:
+                logging.debug("The user graph is already instantiated")
+                print("The user graph is already instantiated")
                 response.status = falcon.HTTP_403
-
+            else:
+                # Now, it initialize a new controller instance to handle the request
+                controller = ServiceLayerController(user_data)
+                request_dict = json.loads(request.stream.read().decode())
+                RequestValidator.validate(request_dict)
+                if 'device' in request_dict['session']:
+                    # add a new endpoint to the graph for this device if it came from a new port
+                    graph_manager = ClientGraphManager(user_data)                
+                    # send request to controller
+                    controller.put(
+                        mac_address=request_dict['session']['device']['mac'],
+                        location=request_dict['session']['device']['port'],
+                        nffg=graph_manager.nffg,
+                        is_user = True
+                    )
+                    response.status = falcon.HTTP_202
+                else:
+                    response.status = falcon.HTTP_403
         except requests.HTTPError as err:
             logging.exception(err.response.text)
             if err.response.status_code == 401:
