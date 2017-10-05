@@ -1,30 +1,27 @@
 # Service Layer installation guide
 
-Tested on ubuntu 14.04.1 and Debian stretch-testing.
+Tested on ubuntu 14.04.1 .
 
 #### Required packages
 First of all, install required packages from your distribution repositories:
 
-    sudo apt-get install python3-dev python3-setuptools python3-pip python3-sqlalchemy libmysqlclient-dev
-    sudo pip3 install --upgrade falcon requests gunicorn jsonschema pymysql
+    sudo apt-get install python-dev python-setuptools python-pip python-sqlalchemy libmysqlclient-dev
 
-#### DoubleDecker
-The frog4-service-layer uses the [DoubleDecker](https://github.com/Acreo/DoubleDecker) messaging system to recieve informations from below domains. In order to launch the frog4-service-layer you need to install DoubleDecker.
-Install the python version of the client required to run the service layer cloning the repository and following the istructions provied:
-
-    git clone https://github.com/Acreo/DoubleDecker-py
-
-If you need to run the message broker too, you have to install the C version of Double Decker, from the following repository:
-
-    git clone https://github.com/Acreo/DoubleDecker
-    
 #### Clone this repository
 Now you have to clone this repository and all the submodules. Submodules include components that are part of the service layer but that are being developed in different repositories. This lead to the necessity to clone them as well in the right folders, under the FROG4 service layer root. For this, please follow the steps below:
 
-    git clone https://github.com/netgroup-polito/frog4-service-layer
+    git clone -b service_layer_jolnet https://github.com/netgroup-polito/frog4-service-layer
     cd frog4-service-layer
     git submodule init && git submodule update
     
+#### Install the virtualizer library
+After installing the python library, in the virtualizer_library directory there is a README with the instructions to install this library. This library works only with python 2.7. If you are using multiple python version, you can run this software in a virtual environment, following this instruction:
+	
+	cd [service_layer_folder]
+	virtualenv .env
+	source .env/bin/activate
+	pip install --upgrade falcon requests gunicorn jsonschema pymysql
+
 #### Create database
 The FROG4 service-layer uses a local mySQL database that has to be created and initialized by executing the steps below.
 
@@ -62,3 +59,8 @@ Configuration parameters are stored in [config/default-config.ini](config/defaul
 You can launch the service layer by executing the following script in the root folder, optionally specifying your own configuration file (example: conf/config.ini):
 
         ./start_service_layer.sh [-d conf_file]
+
+or if you are using the virtualenv:
+	
+	source .env/bin/activate
+	./start_service_layer.sh [-d conf_file]

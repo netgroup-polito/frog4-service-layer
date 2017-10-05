@@ -1,2 +1,2 @@
 #!/bin/bash
-screen -S orchestrator -d -m ./start_service_layer.sh
+screen -S service_layer -d -m ./start_service_layer.sh

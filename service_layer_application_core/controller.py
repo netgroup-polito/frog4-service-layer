@@ -37,12 +37,8 @@ class ServiceLayerController:
 
     def get_nffg(self):
 
-        session = Session().get_active_user_session(self.user_data.getUserID())
-        logging.debug("Graph id: " + session.service_graph_id)
-
-        nffg = self.orchestrator.getNFFG(session.service_graph_id)
-        logging.debug("Got graph '" + session.service_graph_id + "' from orchestrator.")
-
+        nffg = self.orchestrator.getNFFG()
+        logging.debug("Got graph from orchestrator.")
         return nffg
 
     def delete(self, nffg, mac_address=None):
@@ -164,11 +160,8 @@ class ServiceLayerController:
             if nffg is not None:
                 # Graph parsing
                 flag = True
-
                 logging.debug("+++++++++++++++++++++++++++++++++++++++++")
-                #nffg = setFlowentry(nffg)
                 nffg = addFlows(self, nffg, location)
-
 
                 try:
                     tree = ET.ElementTree(ET.fromstring(nffg))

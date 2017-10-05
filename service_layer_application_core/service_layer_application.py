@@ -33,7 +33,7 @@ class ServiceLayer(object):
         """
         authentication_graph = AuthGraphManager()
         authentication_graph.instantiate_auth_graph(self)
-        logging.debug("Authentication graph started - commented")
+        logging.debug("Authentication graph started")
     
     def on_delete(self, request, response, mac_address=None):
         """ 
@@ -119,8 +119,8 @@ class ServiceLayer(object):
                 request_dict = json.loads(request.stream.read().decode())
                 RequestValidator.validate(request_dict)
                 if 'device' in request_dict['session']:
-                    # add a new endpoint to the graph for this device if it came from a new port
-                    graph_manager = ClientGraphManager(user_data)                
+                    # try to instantiate the user graph
+                    graph_manager = ClientGraphManager(user_data)
                     # send request to controller
                     controller.put(
                         mac_address=request_dict['session']['device']['mac'],
@@ -157,48 +157,6 @@ class ServiceLayer(object):
             raise falcon.HTTPUnauthorized("Authentication error. ", err.message)
         except GraphNotFound as err:
             raise falcon.HTTPForbidden("Graph not found. ", err.message)
-        except Exception as err:
-            logging.exception(err)
-            raise falcon.HTTPInternalServerError('Contact the admin. ', str(err))
-
-    def on_get(self, request, response):
-        """
-        Get the status of the user NF-FG by requesting it to the orchestrator.
-
-        :param request: HTTP GET request containing user credential as headers (X-Auth-User, X-Auth-Pass, X-Auth-Tenant)
-        :param response: The status of the NF-FG returned by the orchestrator
-        """
-        try:
-            user_data = UserAuthentication().authenticateUserFromRESTRequest(request)
-            logging.debug("Authenticated user: " + user_data.username)
-            # Now, it initialize a new controller instance to handle the request
-            controller = ServiceLayerController(user_data)
-            response.body, response.status = controller.get()
-        except ValueError:
-            logging.exception("Malformed JSON")
-            raise falcon.HTTPError(falcon.HTTP_753,
-                                   'Malformed JSON',
-                                   'Could not decode the request body. The '
-                                   'JSON was incorrect.')
-        except requests.HTTPError as err:
-            logging.exception(err.response.text)
-            if err.response.status_code == 401:
-                raise falcon.HTTPUnauthorized(json.loads(err.response.text)['error']['title'],
-                                              json.loads(err.response.text))
-            elif err.response.status_code == 403:
-                raise falcon.HTTPForbidden(json.loads(err.response.text)['error']['title'],
-                                           json.loads(err.response.text))
-            elif err.response.status_code == 404:
-                logging.exception("Graph not yet instantiated for this user.")
-                raise falcon.HTTPNotFound()
-            raise err
-        except SessionNotFound:
-            raise falcon.HTTPNotFound()
-        except falcon.HTTPError as err:
-            logging.exception("Falcon " + err.title)
-            raise
-        except UnauthorizedRequest as err:
-            raise falcon.HTTPUnauthorized("Authentication error. ", err.message)
         except Exception as err:
             logging.exception(err)
             raise falcon.HTTPInternalServerError('Contact the admin. ', str(err))
