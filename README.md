@@ -5,3 +5,4 @@ The network is initially configured with a default service graph that redirect a
 A successful user authentication triggers the instantiation of the service graph associated to that user.
 From that point on, all the traffic of that user will pass through the functions defined in the user' selected service graph before being transmitted to the Internet.
 All the traffic of the unauthenticated users is instead redirected to the captive portal, until a successfull autentication occurs. When a new user is authenticated, the service layer prepares the user graph; then it performs a request to the MdO Orchestrator to deploy the graph on the below infrastructure.
+Currently the service layer support graphs with one NF (Network Function) and uses the port 0 of the NF to build the bidirectional flow that allow the user traffic to reach the NF.

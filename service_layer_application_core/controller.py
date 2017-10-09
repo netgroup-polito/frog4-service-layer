@@ -9,10 +9,10 @@ from __future__ import division
 import falcon
 import logging
 import uuid
+import os
 import xml.etree.ElementTree as ET
 
 from service_layer_application_core.config import Configuration
-
 from service_layer_application_core.sql.graph import Graph
 from service_layer_application_core.sql.session import Session, UserDeviceModel
 from service_layer_application_core.sql.user import User
@@ -23,8 +23,6 @@ from service_layer_application_core.exception import SessionNotFound, GraphNotFo
 from virtualizer_library.virtualizer import Virtualizer,  Software_resource, Infra_node, Port as Virt_Port
 
 DEBUG_MODE = Configuration().DEBUG_MODE
-
-
 
 class ServiceLayerController:
 
@@ -50,6 +48,8 @@ class ServiceLayerController:
         """
 
         logging.debug("Delete user service graph: "+self.user_data.username)
+        user_id = User().getUser(self.user_data.username).id
+        session_id = Session().get_active_user_session(user_id).id
         if nffg is not None:
             # Graph parsing
             try:
@@ -68,7 +68,7 @@ class ServiceLayerController:
             try:
                 mdo_config = self.orchestrator.getNFFG()
                 logging.debug('Retrieved configuration: ')
-                logging.debug(mdo_config)
+                #logging.debug(mdo_config)
             except Exception as err:
                 logging.exception(err)
                 Session().set_error(session_id)
@@ -113,20 +113,17 @@ class ServiceLayerController:
                 raise err
         else:
             # debug mode
-            #graph_db_id = Graph().add_graph(sl_nffg, session_id)
-            #if domain_name is not None:
-            #    Graph.set_domain_id(graph_db_id, Domain.get_domain_from_name(domain_name).id)
-            logging.debug(nffg)
+            logging.debug("DEBUG MODE: ")
         logging.debug('Deleted profile of user "'+self.user_data.username+'"')
         print('Deleted profile of user "' + self.user_data.username + '"')
 
         # Set the field ended in the table session to the actual data time
-        #TODO scommentare la riga sotto alla fine del debug
-        #Session().set_ended(session.id)
+        #commentare la riga sotto in caso di debug
+        Session().set_ended(session_id)
  
     def put(self, mac_address=None, location=None, is_user=False, domain_name=None, nffg=None):
         """
-
+		put can handle only graphs that have one nf to instance per time
         :param mac_address:
         :param device_endpoint_id: the id of the end point in the nffg to which the device is attached
         :param domain_name:
@@ -149,8 +146,6 @@ class ServiceLayerController:
         # if domain is specified, label the nffg with it
         if domain_name is not None:
             nffg.domain = domain_name
-        # Check if the user have an active session TODO: aggiungere check con get_active_user_session
-        #if UserSession(self.user_data.getUserID(), self.user_data).checkSession(nffg.id, self.orchestrator) is True:
         if is_user is True:
             # User graph
             logging.debug('The FG for this user with this device is not yet instantiated')
@@ -160,8 +155,8 @@ class ServiceLayerController:
             if nffg is not None:
                 # Graph parsing
                 flag = True
-                logging.debug("+++++++++++++++++++++++++++++++++++++++++")
-                nffg = addFlows(self, nffg, location)
+                #logging.debug("+++++++++++++++++++++++++++++++++++++++++")
+                nffg = add_access_flows(self, nffg, location)
 
                 try:
                     tree = ET.ElementTree(ET.fromstring(nffg))
@@ -241,8 +236,8 @@ class ServiceLayerController:
                 nffg= Infrastructure.xml()
                 '''
                 nffg = newInfrastructure.xml()
-                #TODO eliminare il commento alla initialize session finito il debug. Bisogna anche tenere traccia degli id delle flowrule quando l'utente fa il logout
-                #Session().inizializeSession(session_id, self.user_data.getUserID(), graph_id, graph_name)
+                #commentare la riga sotto in caso di debug
+                Session().inizializeSession(session_id, self.user_data.getUserID(), graph_id, graph_name)
         else:
             # Authentication graph
             logging.debug('Instantiating the authentication graph')
@@ -251,26 +246,19 @@ class ServiceLayerController:
             if nffg is not None:
                 try:
                     tree = ET.ElementTree(ET.fromstring(nffg))
-                    logging.debug("1--> %s", tree)
-                    logging.debug("2--> %s", tree.getroot())
-                    logging.debug("3--> %s %s", tree.getroot().tag, tree.getroot().attrib)
                     root = tree.getroot()
-                    for child in root.findall("nodes"):
-                        logging.debug("%s %s", child.tag, child.attrib)
                 except ET.ParseError as e:
                     print('ParseError: %s' % e.message)
                     logging.exception(e)
-                    Session().set_error(session_id)
                     raise e
                 newInfrastructure = Virtualizer.parse(root=root)
-                newFlowtable = newInfrastructure.nodes.node['SingleBiSBiS'].flowtable
                 newNfInstances = newInfrastructure.nodes.node['SingleBiSBiS'].NF_instances
                 for child in newNfInstances:
                     graph_id = child.id.get_value()
                     graph_name = child.name.get_value()
                 logging.debug("Istanza grafo %s -- %s", graph_id, graph_name)
-                #TODO eliminare il commento alla initialize session finito il debug.
-                #Session().inizializeSession(session_id, self.user_data.getUserID(), graph_id, graph_name)
+                #commentare la riga sotto in caso di debug
+                Session().inizializeSession(session_id, self.user_data.getUserID(), graph_id, graph_name)
 
         # Call orchestrator to instantiate NF-FG
         logging.debug("Calling orchestrator to instantiate '"+self.user_data.username+"' forwarding graph.")
@@ -289,23 +277,32 @@ class ServiceLayerController:
             logging.debug("DEBUG_MODE: Graph "+ graph_name  + " instantiated for user '"+self.user_data.username+"'")
             logging.debug(nffg)
 
-def addFlows(self, nffg, location):
+def add_access_flows(self, nffg, location):
+	"""
+		get the actual mdo configuration, find the id of the sap corresponding to the location parameter and than create
+		a bidirectional flow between the port 0 of the nf and the retrieved sap.
+        :param nffg:
+        :param location:
+        :type nffg: string
+        :type location: string
+        :return: nffg
+    """
 	logging.debug('Calling orchestrator getting actual configuration')
 	try:
 		mdo_config = self.orchestrator.getNFFG()
 		logging.debug('Retrieved configuration: ')
 		#logging.debug(mdo_config)
-	except Exception as err:
-		logging.exception(err)
-		logging.debug("Failed to retrieve MdO configuration ")
-		raise err
-	try:
+		#Parsing the graph arrived
 		new_tree = ET.ElementTree(ET.fromstring(nffg));
 		new_root = new_tree.getroot()
 	except ET.ParseError as e:
 		print('ParseError: %s' % e.message)
 		logging.exception(e)
 		raise e
+	except Exception as err:
+		logging.exception(err)
+		logging.debug("Failed to retrieve MdO configuration ")
+		raise err
 	newInfrastructure = Virtualizer.parse(root= new_root)
 	newInstances = newInfrastructure.nodes.node['SingleBiSBiS'].NF_instances
 	nf_id = 0
@@ -326,22 +323,38 @@ def addFlows(self, nffg, location):
 	NfInstances = Infrastructure.nodes.node['SingleBiSBiS'].NF_instances
 	Ports = Infrastructure.nodes.node['SingleBiSBiS'].ports
 	logging.debug('Port parsed:' + location)
+	
+	#find the id of the sap corresponding to the location parameter  
 	for port in Ports:
 		logging.debug('port: ' + port.name.get_value())
 		if port.name.get_value() in location:
 			logging.debug('port found')
         	#port_id found
 			id_port = port.id.get_value()
-			id_flow1 = nf_id + str(1) #TODO da cambiare con un valore dinamico
-			port_flow1 = '../../../NF_instances/node[id=' + nf_id + ']/ports/port[id=0]' #the port with id 0 is reserved to the flow added by the service layer 
-			out_flow1 = '/virtualizer/nodes/node[id=SingleBiSBiS]/ports/port[id=' + id_port + ']'       
+			id_flow1 = nf_id + str(1)
 			id_flow2 = nf_id + str(2)
-			port_flow2 = out_flow1
-			out_flow2 = port_flow1
-			filled_nffg = create_xml(id_flow1, port_flow1, out_flow1, id_flow2, port_flow2, out_flow2, nffg)
-			return filled_nffg
+			nf_port = '../../../NF_instances/node[id=' + nf_id + ']/ports/port[id=0]' #the port with id 0 is reserved to the flow added by the service layer 
+			sap_port = '/virtualizer/nodes/node[id=SingleBiSBiS]/ports/port[id=' + id_port + ']'       
+			nffg = add_bidirectional_flow(nffg, id_flow1, id_flow2, nf_port, sap_port)
+			logging.debug('Filled graph: ')
+			logging.debug(nffg)
+			return nffg
 
-def create_xml(id_flow1, port_flow1, out_flow1, id_flow2, port_flow2, out_flow2, nffg):
+def add_bidirectional_flow(nffg, id_flow1, id_flow2, nf_port, sap_port):
+	"""
+		write the nffg in a tmp file, than add in the flow table the rules to create the bidirectional flow, than read and return the nffg
+		:param nffg:
+        :param id_flow1:
+        :param id_flow2:
+        :param nf_port:
+        :param sap_port:
+        :type nffg: string
+        :type id_flow1: string
+        :type id_flow2: string
+        :type nf_port: string
+        :type sap_port: string
+        :return: nffg
+	"""
   	with open(".tmp_"+str(id_flow1), 'w') as outfile1:
   		#logging('Writing file: tmp_' + id_flow1)
    		outfile1.write(nffg);
@@ -356,8 +369,8 @@ def create_xml(id_flow1, port_flow1, out_flow1, id_flow2, port_flow2, out_flow2,
    					outfile.write('\t\t\t\t<flowentry operation=\"create\">\n')
    					outfile.write('\t\t\t\t\t<id>'+str(id_flow1)+'</id>\n')
    					outfile.write('\t\t\t\t\t<priority>100</priority>\n')
-   					outfile.write('\t\t\t\t\t<port>'+port_flow1+'</port>\n')
-   					outfile.write('\t\t\t\t\t<out>'+out_flow1+'</out>\n')
+   					outfile.write('\t\t\t\t\t<port>'+nf_port+'</port>\n')
+   					outfile.write('\t\t\t\t\t<out>'+sap_port+'</out>\n')
    					outfile.write('\t\t\t\t\t<resources>\n')
    					outfile.write('\t\t\t\t\t\t<bandwidth>0</bandwidth>\n')
    					outfile.write('\t\t\t\t\t</resources>\n')
@@ -366,8 +379,8 @@ def create_xml(id_flow1, port_flow1, out_flow1, id_flow2, port_flow2, out_flow2,
    					outfile.write('\t\t\t\t<flowentry operation=\"create\">\n')
    					outfile.write('\t\t\t\t\t<id>'+str(id_flow2)+'</id>\n')
    					outfile.write('\t\t\t\t\t<priority>100</priority>\n')
-   					outfile.write('\t\t\t\t\t<port>'+port_flow2+'</port>\n')
-   					outfile.write('\t\t\t\t\t<out>'+out_flow2+'</out>\n')
+   					outfile.write('\t\t\t\t\t<port>'+sap_port+'</port>\n')
+   					outfile.write('\t\t\t\t\t<out>'+nf_port+'</out>\n')
    					outfile.write('\t\t\t\t\t<resources>\n')
    					outfile.write('\t\t\t\t\t\t<bandwidth>0</bandwidth>\n')
    					outfile.write('\t\t\t\t\t</resources>\n')
@@ -377,5 +390,9 @@ def create_xml(id_flow1, port_flow1, out_flow1, id_flow2, port_flow2, out_flow2,
    				else:
    					outfile.write(row);
    	with open(".tmp_1"+str(id_flow1), 'r') as return_file:
-   		return return_file.read()
+   		to_return = return_file.read()
+
+   	os.remove(".tmp_1"+str(id_flow1))
+   	os.remove(".tmp_"+str(id_flow1))
+   	return to_return
 
