@@ -10,7 +10,7 @@ import falcon
 import json
 import jsonschema
 import logging
-
+from datetime import datetime
 from sqlalchemy.orm.exc import NoResultFound
 
 from service_layer_application_core.authentication_graph_manager import AuthGraphManager
@@ -102,6 +102,7 @@ class ServiceLayer(object):
                         {"session":{}}
         :param response: HTTP response code
         """
+        start_time = datetime.now()
         try:
             logging.debug("A login request arrived");
             user_data = UserAuthentication().authenticateUserFromRESTRequest(request)
@@ -128,6 +129,8 @@ class ServiceLayer(object):
                         nffg=graph_manager.nffg,
                         is_user = True
                     )
+                    end_time = datetime.now() - start_time
+                    print("Time elapsed: ", end_time)
                     response.status = falcon.HTTP_202
                 else:
                     response.status = falcon.HTTP_403

@@ -102,7 +102,7 @@ class ServiceLayerController:
         # De-instantiate User Profile Graph
         if DEBUG_MODE is False:
             try:
-                self.orchestrator.put(nffg)
+                self.orchestrator.post(nffg)
                 logging.debug("Profile deleted for user '"+self.user_data.username+"'")
                 print("Profile deleted for user '"+self.user_data.username+"'")
             except Exception as err:
@@ -264,7 +264,7 @@ class ServiceLayerController:
         logging.debug("Calling orchestrator to instantiate '"+self.user_data.username+"' forwarding graph.")
         if DEBUG_MODE is False:
             try:
-                self.orchestrator.put(nffg)
+                self.orchestrator.post(nffg)
                 logging.debug("Profile instantiated for user '"+self.user_data.username+"'")
             except Exception as err:
                 logging.exception(err)
